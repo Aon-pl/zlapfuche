@@ -1,0 +1,349 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  person
+  company
+  admin
+}
+
+enum JobCategory {
+  warehouse
+  construction
+  hospitality
+  retail
+  transport
+  cleaning
+  manufacturing
+  agriculture
+  office
+  other
+}
+
+enum JobStatus {
+  active
+  paused
+  closed
+  expired
+  blocked
+}
+
+enum SalaryType {
+  hourly
+  daily
+  monthly
+}
+
+enum ApplicationStatus {
+  pending
+  viewed
+  accepted
+  rejected
+}
+
+enum ReviewType {
+  person_reviews_company
+  company_reviews_person
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole
+  phone     String?
+  blocked   Boolean  @default(false)
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  personProfile  PersonProfile?
+  companyProfile CompanyProfile?
+  notifications  Notification[]
+  emailVerified            Boolean                  @default(false) @map("email_verified")
+  emailVerificationTokens  EmailVerificationToken[]
+  @@map("users")
+}
+
+model PersonProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique @map("user_id")
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  city            String?
+  jobSeeker JobSeeker?
+  bio             String?   @db.Text
+  cvUrl           String?   @map("cv_url")
+  skills          String?   @db.Text
+  experienceYears Int       @default(0) @map("experience_years")
+  availableFrom   DateTime? @map("available_from")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobOffers    JobOffer[]    @relation("PersonOffers")
+  applications Application[]
+  savedOffers  SavedOffer[]
+
+  reviewsGiven    Review[] @relation("ReviewsGivenByPerson")
+  reviewsReceived Review[] @relation("ReviewsReceivedByPerson")
+
+  conversationsAsMain  Conversation[] @relation("ConvPerson")
+  conversationsAsA     Conversation[] @relation("ConvPersonA")
+  conversationsAsB     Conversation[] @relation("ConvPersonB")
+  messagesSent         Message[]      @relation("MessagesSentByPerson")
+  messagesSentAsTarget Message[] @relation("MessagesSentByTargetPerson") 
+  @@map("person_profiles")
+  
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+model JobSeeker {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  personId       String   @unique @map("person_id")
+  person         PersonProfile @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  // Widoczność ogłoszenia
+  active         Boolean  @default(true)
+
+  // Dane ogłoszenia
+  title          String                    // np. "Szukam pracy w magazynie"
+  description    String?  @db.Text
+  city           String
+  skills         String?  @db.Text        // JSON array
+  expectedSalary Int?     @map("expected_salary")
+  salaryType     String   @default("hourly") @map("salary_type")
+  availableFrom  DateTime? @map("available_from")
+  drivingLicense Boolean  @default(false) @map("driving_license")
+  experienceYears Int     @default(0) @map("experience_years")
+
+  @@map("job_seekers")
+}
+
+
+model CompanyProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  companyName    String   @map("company_name")
+  companyLogoUrl String?  @map("company_logo_url")
+  description    String?  @db.Text
+  website        String?
+  nip            String?
+  city           String
+  address        String?
+  verified       Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobOffers JobOffer[] @relation("CompanyOffers")
+  savedOffers SavedOffer[]
+  reviewsGiven    Review[] @relation("ReviewsGivenByCompany")
+  reviewsReceived Review[] @relation("ReviewsReceivedByCompany")
+
+  conversations   Conversation[] @relation("ConvCompany")
+  messagesSent    Message[]      @relation("MessagesSentByCompany")
+
+  @@map("company_profiles")
+}
+
+model JobOffer {
+  id                String      @id @default(cuid())
+  companyId         String?     @map("company_id")
+  personId          String?     @map("person_id")
+  title             String
+  description       String      @db.Text
+  category          JobCategory
+  status            JobStatus   @default(active)
+  city              String
+  address           String?
+  postalCode  String?  @map("postal_code")
+  lat         Float?
+  lng         Float?
+  remote            Boolean     @default(false)
+  salaryMin         Float?      @map("salary_min")
+  salaryMax         Float?      @map("salary_max")
+  salaryType        SalaryType  @default(hourly) @map("salary_type")
+  currency          String      @default("PLN")
+  startDate         DateTime    @map("start_date")
+  endDate           DateTime?   @map("end_date")
+  hoursPerWeek      Int?        @map("hours_per_week")
+  requirements      String?     @db.Text
+  minAge            Int         @default(18) @map("min_age")
+  drivingLicense    Boolean     @default(false) @map("driving_license")
+  viewsCount        Int         @default(0) @map("views_count")
+  applicationsCount Int         @default(0) @map("applications_count")
+  voivodeship       String?
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+  expiresAt DateTime @default(dbgenerated("(NOW() + INTERVAL '30 days')")) @map("expires_at")
+
+  company      CompanyProfile? @relation("CompanyOffers", fields: [companyId], references: [id], onDelete: Cascade)
+  person       PersonProfile?  @relation("PersonOffers", fields: [personId], references: [id], onDelete: Cascade)
+  applications Application[]
+  savedBy      SavedOffer[]
+  reviews      Review[]
+  conversations Conversation[]
+  
+
+  @@index([city])
+  @@index([category])
+  @@index([status])
+  @@index([companyId])
+  @@index([personId])
+  @@map("job_offers")
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  offerId     String            @map("offer_id")
+  applicantId String            @map("applicant_id")
+  status      ApplicationStatus @default(pending)
+  coverLetter String?           @db.Text @map("cover_letter")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  offer     JobOffer      @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  applicant PersonProfile @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@unique([offerId, applicantId])
+  @@index([offerId])
+  @@index([applicantId])
+  @@map("applications")
+}
+
+model SavedOffer {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  offerId   String  @map("offer_id")
+  personId  String? @map("person_id")
+  companyId String? @map("company_id")
+
+  offer   JobOffer        @relation(fields: [offerId],   references: [id], onDelete: Cascade)
+  person  PersonProfile?  @relation(fields: [personId],  references: [id], onDelete: Cascade)
+  company CompanyProfile? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([personId,  offerId], name: "personId_offerId")
+  @@unique([companyId, offerId], name: "companyId_offerId")
+  @@map("saved_offers")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String   @db.Text
+  type      String
+  read      Boolean  @default(false)
+  data      String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model Review {
+  id        String     @id @default(cuid())
+  type      ReviewType
+  rating    Int
+  comment   String?    @db.Text
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  authorPersonId  String? @map("author_person_id")
+  authorCompanyId String? @map("author_company_id")
+  targetPersonId  String? @map("target_person_id")
+  targetCompanyId String? @map("target_company_id")
+  jobOfferId      String? @map("job_offer_id")
+  companyReply     String?   @db.Text @map("company_reply")
+  companyRepliedAt DateTime? @map("company_replied_at")
+  
+  authorPerson  PersonProfile?  @relation("ReviewsGivenByPerson",    fields: [authorPersonId],  references: [id], onDelete: Cascade)
+  authorCompany CompanyProfile? @relation("ReviewsGivenByCompany",   fields: [authorCompanyId], references: [id], onDelete: Cascade)
+  targetPerson  PersonProfile?  @relation("ReviewsReceivedByPerson",  fields: [targetPersonId],  references: [id], onDelete: Cascade)
+  targetCompany CompanyProfile? @relation("ReviewsReceivedByCompany", fields: [targetCompanyId], references: [id], onDelete: Cascade)
+  jobOffer      JobOffer?       @relation(fields: [jobOfferId], references: [id], onDelete: SetNull)
+
+  @@index([targetCompanyId])
+  @@index([targetPersonId])
+  @@map("reviews")
+}
+
+// Typ konwersacji
+enum ConversationType {
+  person_company  // osoba <-> firma (wymaga aplikacji)
+  person_person   // osoba <-> osoba (dowolne)
+}
+
+model Conversation {
+  id        String           @id @default(cuid())
+  type      ConversationType
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  // person<->company
+  personId   String? @map("person_id")
+  companyId  String? @map("company_id")
+  jobOfferId String? @map("job_offer_id")
+
+  // person<->person
+  personAId  String? @map("person_a_id")
+  personBId  String? @map("person_b_id")
+
+  person   PersonProfile?  @relation("ConvPerson",  fields: [personId],  references: [id], onDelete: Cascade)
+  company  CompanyProfile? @relation("ConvCompany", fields: [companyId], references: [id], onDelete: Cascade)
+  jobOffer JobOffer?       @relation(fields: [jobOfferId], references: [id], onDelete: SetNull)
+  personA  PersonProfile?  @relation("ConvPersonA", fields: [personAId], references: [id], onDelete: Cascade)
+  personB  PersonProfile?  @relation("ConvPersonB", fields: [personBId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+
+  @@index([personId])
+  @@index([companyId])
+  @@index([personAId])
+  @@index([personBId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  content        String   @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  read           Boolean  @default(false)
+
+  senderPersonId        String? @map("sender_person_id")
+  senderCompanyId       String? @map("sender_company_id")
+  senderTargetPersonId  String? @map("sender_target_person_id")
+
+  conversation       Conversation    @relation(fields: [conversationId],      references: [id], onDelete: Cascade)
+  senderPerson       PersonProfile?  @relation("MessagesSentByPerson",        fields: [senderPersonId],       references: [id], onDelete: SetNull)
+  senderCompany      CompanyProfile? @relation("MessagesSentByCompany",       fields: [senderCompanyId],      references: [id], onDelete: SetNull)
+  senderTargetPerson PersonProfile?  @relation("MessagesSentByTargetPerson",  fields: [senderTargetPersonId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@map("messages")
+}
