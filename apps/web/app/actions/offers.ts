@@ -120,7 +120,7 @@ export async function getOffers(filters: OffersFilters = {}) {
 
     if (coords) {
       const [lat, lon] = coords
-      const nearby = allOffers.filter(offer => {
+      const nearby = allOffers.filter((offer: typeof allOffers[0]) => {
         // Użyj lat/lng z bazy jeśli dostępne
         if (offer.lat && offer.lng) {
           return distanceKm(lat, lon, offer.lat, offer.lng) <= radius
