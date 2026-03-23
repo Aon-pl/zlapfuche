@@ -1,0 +1,12 @@
+[build]
+  # To mówi Netlify, gdzie ma zacząć pracę
+  base = "apps/web"
+
+  # To mówi, jaką komendę wykonać wewnątrz apps/web
+  command = "npx prisma generate && npm run build"
+
+  # To mówi, gdzie są pliki wynikowe (relatywnie do apps/web)
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
