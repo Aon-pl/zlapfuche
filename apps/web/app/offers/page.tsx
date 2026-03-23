@@ -1,7 +1,7 @@
 import { getOffers } from '@/app/actions/offers'
 import OffersFilters from '@/components/OffersFilters'
 import OffersClientWrapper from '@/components/OffersClientWrapper'
-
+export const dynamic = 'force-dynamic';
 interface PageProps {
   searchParams: Promise<{
     category?:       string
