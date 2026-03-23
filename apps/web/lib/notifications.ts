@@ -19,7 +19,8 @@ export async function notifyNewApplication(offerId: string, applicantName: strin
       userId:  targetUserId,
       title:   'Nowa aplikacja',
       message: `${applicantName} aplikował/a na Twoją ofertę "${offer.title}".`,
-    },
+      type:    'INFO' // Dodane przykładowe pole type
+    } as any,
   })
 }
 
@@ -50,7 +51,8 @@ export async function notifyApplicationStatusChange(
       userId:  application.applicant.userId,
       title:   'Zmiana statusu aplikacji',
       message: `Twoja aplikacja na "${application.offer.title}" została ${statusLabel}.`,
-    },
+      type:    'INFO' // Dodane przykładowe pole type
+    } as any,
   })
 }
 
@@ -67,8 +69,6 @@ export async function notifyNewMessage(conversationId: string, senderName: strin
   })
   if (!conversation) return
 
-  // Zbierz wszystkich uczestników — powiadomienie trafi do tych którzy nie są nadawcą
-  // (logika rozróżnienia nadawca/odbiorca odbywa się w miejscu wywołania)
   const allUserIds = [
     conversation.person?.userId,
     conversation.company?.userId,
@@ -76,7 +76,7 @@ export async function notifyNewMessage(conversationId: string, senderName: strin
     conversation.personB?.userId,
   ].filter(Boolean) as string[]
 
-  return allUserIds // zwróć listę userIds żeby wywołujący mógł wykluczyć nadawcę
+  return allUserIds 
 }
 
 export async function notifyNewMessageToUser(targetUserId: string, senderName: string) {
@@ -85,6 +85,7 @@ export async function notifyNewMessageToUser(targetUserId: string, senderName: s
       userId:  targetUserId,
       title:   'Nowa wiadomość',
       message: `${senderName} wysłał/a Ci wiadomość.`,
-    },
+      type:    'MESSAGE' // Dodane przykładowe pole type
+    } as any,
   })
 }
