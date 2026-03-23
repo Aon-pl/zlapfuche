@@ -9,8 +9,8 @@ export async function updatePersonProfile(formData: FormData) {
   if (!session?.user?.id) return { error: 'Nie jesteś zalogowany.' }
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
+await prisma.$transaction(async (tx: any) => {
+        await tx.user.update({
         where: { id: session.user.id },
         data: { phone: (formData.get('phone') as string) || null },
       })
