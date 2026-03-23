@@ -39,6 +39,9 @@ await prisma.$transaction(async (tx: any) => {
   }
 }
 
+// Alias – worker.tsx używa tej nazwy
+export const updateWorkerProfile = updatePersonProfile
+
 export async function updateCompanyProfile(formData: FormData) {
   const session = await auth()
   if (!session?.user?.id) return { error: 'Nie jesteś zalogowany.' }

@@ -72,22 +72,11 @@ export async function changePhone(formData: FormData): Promise<{ error?: string;
   const phoneRegex = /^[+]?[\d\s\-()]{7,20}$/
   if (!phoneRegex.test(phone)) return { error: 'Nieprawidłowy format numeru telefonu' }
 
-  // Telefon jest przechowywany na profilu (person lub company), nie na User
-  const role = session.user.role
-
-  if (role === 'person') {
-    await prisma.personProfile.update({
-      where: { userId: session.user.id },
-      data: { phone },
-    })
-  } else if (role === 'company') {
-    await prisma.companyProfile.update({
-      where: { userId: session.user.id },
-      data: { phone },
-    })
-  } else {
-    return { error: 'Zmiana telefonu niedostępna dla tego konta' }
-  }
+  // Telefon jest przechowywany bezpośrednio na User
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { phone },
+  })
 
   revalidatePath('/account')
   return { success: true }

@@ -6,11 +6,12 @@ import { prisma } from '@/lib/prisma'
 export default async function ChatListPage() {
   const session = await auth()
   if (!session?.user) redirect('/login')
+  const user = session.user
 
   let conversations: any[] = []
   let myProfileId = ''
 
-  if (session.user.role === 'person') {
+  if (user.role === 'person') {
     const profile = await prisma.personProfile.findUnique({ where: { userId: session.user.id } })
     if (profile) {
       myProfileId = profile.id
@@ -27,7 +28,7 @@ export default async function ChatListPage() {
         orderBy: { updatedAt: 'desc' },
       })
     }
-  } else if (session.user.role === 'company') {
+  } else if (user.role === 'company') {
     const profile = await prisma.companyProfile.findUnique({ where: { userId: session.user.id } })
     if (profile) {
       conversations = await prisma.conversation.findMany({
@@ -43,7 +44,7 @@ export default async function ChatListPage() {
   }
 
   function getOtherName(conv: any): string {
-    if (session.user.role === 'company') return conv.person ? `${conv.person.firstName} ${conv.person.lastName}` : 'Nieznany'
+    if (user.role === 'company') return conv.person ? `${conv.person.firstName} ${conv.person.lastName}` : 'Nieznany'
     if (conv.type === 'person_company') return conv.company?.companyName ?? 'Nieznana firma'
     if (conv.personAId === myProfileId) return conv.personB ? `${conv.personB.firstName} ${conv.personB.lastName}` : 'Nieznany'
     return conv.personA ? `${conv.personA.firstName} ${conv.personA.lastName}` : 'Nieznany'
@@ -83,7 +84,7 @@ export default async function ChatListPage() {
             <p className="text-5xl mb-3">💬</p>
             <h3 className="font-bold text-gray-900 mb-1">Brak wiadomości</h3>
             <p className="text-sm text-gray-500">
-              {session.user.role === 'person'
+              {user.role === 'person'
                 ? 'Wejdź na profil innej osoby lub aplikuj na ofertę firmy.'
                 : 'Przejdź do aplikacji kandydatów i rozpocznij rozmowę.'}
             </p>

@@ -27,7 +27,7 @@ interface Offer {
   salaryType: string
   remote: boolean
   drivingLicense: boolean
-  createdAt: string
+  createdAt: Date | string
   applicationsCount: number
   lat?: number | null
   lng?: number | null

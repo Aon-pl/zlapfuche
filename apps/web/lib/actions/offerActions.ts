@@ -56,15 +56,15 @@ export async function updateOffer(offerId: string, formData: FormData) {
   const description  = formData.get('description')  as string
   const requirements = formData.get('requirements') as string | null
   const city         = formData.get('city')         as string
-  const category     = formData.get('category')     as string
+  const category     = formData.get('category')     as any
   const salaryMin    = formData.get('salaryMin')     ? Number(formData.get('salaryMin'))    : null
   const salaryMax    = formData.get('salaryMax')     ? Number(formData.get('salaryMax'))    : null
-  const salaryType   = formData.get('salaryType')   as string
+  const salaryType   = formData.get('salaryType')   as any
   const hoursPerWeek = formData.get('hoursPerWeek') ? Number(formData.get('hoursPerWeek')) : null
   const remote       = formData.get('remote') === 'true'
   const drivingLicense = formData.get('drivingLicense') === 'true'
   const minAge       = formData.get('minAge')       ? Number(formData.get('minAge'))        : 18
-  const status       = formData.get('status')       as string
+  const status       = formData.get('status')       as any
   const startDate    = new Date(formData.get('startDate') as string)
   const endDate      = formData.get('endDate') ? new Date(formData.get('endDate') as string) : null
   const expiresAt    = new Date(formData.get('expiresAt') as string)
