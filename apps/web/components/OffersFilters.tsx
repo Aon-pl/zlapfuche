@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 const CATEGORIES = [
   { value: 'warehouse',     label: 'Magazyn',     icon: '📦' },
@@ -44,9 +44,26 @@ interface Params {
 
 interface Props { params: Params }
 
+function FilterChevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  )
+}
+
 export default function OffersFilters({ params }: Props) {
   const router   = useRouter()
   const pathname = usePathname()
+
+  const [mobileExpanded, setMobileExpanded] = useState(false)
 
   const [category,    setCategory]    = useState(params.category    ?? '')
   const [city,        setCity]        = useState(params.city        ?? '')
@@ -59,6 +76,16 @@ export default function OffersFilters({ params }: Props) {
   const [sort,           setSort]           = useState(params.sort ?? 'newest')
 
   const activeCount = [category, city, voivodeship, salaryMin, salaryMax, remote ? 'true' : '', drivingLicense ? 'true' : ''].filter(Boolean).length
+
+  useEffect(() => {
+    function onResize() {
+      if (typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches) {
+        setMobileExpanded(false)
+      }
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const apply = useCallback((overrides: Partial<Record<keyof Params, string>> = {}) => {
     const q = new URLSearchParams()
@@ -90,10 +117,33 @@ export default function OffersFilters({ params }: Props) {
   const inputClass   = "w-full px-3 py-2.5 bg-slate-50 border border-slate-200 hover:border-slate-300 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 rounded-xl text-slate-800 placeholder-slate-400 text-sm outline-none transition-all"
 
   return (
-    <div className="space-y-3 sticky top-20">
+    <div className="space-y-3 md:sticky md:top-20 z-30">
+
+      <button
+        type="button"
+        className="md:hidden w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border border-slate-200 bg-white shadow-sm text-left touch-manipulation"
+        onClick={() => setMobileExpanded(v => !v)}
+        aria-expanded={mobileExpanded}
+        aria-controls="offers-filters-panel"
+      >
+        <span className="flex items-center gap-2 text-slate-800 font-bold text-sm">
+          Filtry
+          {activeCount > 0 && (
+            <span className="min-w-6 h-6 px-1.5 inline-flex items-center justify-center bg-yellow-400 text-zinc-950 text-xs font-black rounded-full">
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <FilterChevron open={mobileExpanded} />
+      </button>
+
+      <div
+        id="offers-filters-panel"
+        className={`space-y-3 ${mobileExpanded ? '' : 'max-md:hidden'} md:block`}
+      >
 
       {/* Nagłówek */}
-      <div className="flex items-center justify-between px-1">
+      <div className="hidden md:flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="text-slate-800 font-bold text-sm">Filtry</span>
           {activeCount > 0 && (
@@ -104,6 +154,15 @@ export default function OffersFilters({ params }: Props) {
         </div>
         {activeCount > 0 && (
           <button onClick={reset} className="text-xs text-slate-400 hover:text-red-500 transition-colors">
+            Wyczyść
+          </button>
+        )}
+      </div>
+
+      <div className="md:hidden flex items-center justify-between px-1 pt-1 pb-0.5">
+        <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Szczegóły filtrów</span>
+        {activeCount > 0 && (
+          <button type="button" onClick={reset} className="text-xs text-slate-400 hover:text-red-500 transition-colors touch-manipulation py-2">
             Wyczyść
           </button>
         )}
@@ -225,6 +284,7 @@ export default function OffersFilters({ params }: Props) {
         </button>
       </div>
 
+      </div>
     </div>
   )
 }

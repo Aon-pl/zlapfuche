@@ -68,7 +68,7 @@ export default function OffersClientWrapper({ offers, total, pages, currentPage,
       : null
 
     if (grid) return (
-      <Link href={`/offers/${offer.id}`} className={`${card} p-4 flex flex-col gap-3 relative overflow-hidden`}>
+      <Link href={`/offers/${offer.id}`} className={`${card} p-4 flex flex-col gap-3 relative overflow-hidden max-md:pb-3`}>
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white shrink-0 overflow-hidden text-sm"
             style={{ background: '#f97015' }}>
@@ -93,18 +93,33 @@ export default function OffersClientWrapper({ offers, total, pages, currentPage,
           {salary && <p className="text-sm font-black" style={{ color: '#f97015' }}>{salary}</p>}
         </div>
 
-        {/* Hover overlay z buttonami */}
-        <div className="absolute inset-0 flex items-end p-3 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200"
-          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.97) 60%, transparent)' }}>
+        <div
+          className="hidden md:flex absolute inset-0 items-end p-3 gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto"
+          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.97) 60%, transparent)' }}
+        >
           <span className="flex-1 text-center py-2 rounded-xl text-xs font-bold text-white transition-all"
             style={{ background: '#f97015' }}>
             Sprawdź ofertę
           </span>
           <button
+            type="button"
             onClick={e => { e.preventDefault(); e.stopPropagation(); setPreviewId(offer.id) }}
-            className="flex-1 py-2 rounded-xl text-xs font-bold border transition-all bg-white"
+            className="flex-1 py-2 rounded-xl text-xs font-bold border transition-all bg-white pointer-events-auto"
             style={{ borderColor: '#f97015', color: '#f97015' }}>
             Podgląd oferty
+          </button>
+        </div>
+        <div className="flex md:hidden gap-2 mt-1">
+          <span className="flex-1 text-center py-2.5 rounded-xl text-xs font-bold text-white"
+            style={{ background: '#f97015' }}>
+            Otwórz ofertę
+          </span>
+          <button
+            type="button"
+            onClick={e => { e.preventDefault(); e.stopPropagation(); setPreviewId(offer.id) }}
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold border bg-white touch-manipulation"
+            style={{ borderColor: '#f97015', color: '#f97015' }}>
+            Podgląd
           </button>
         </div>
       </Link>
@@ -112,45 +127,61 @@ export default function OffersClientWrapper({ offers, total, pages, currentPage,
 
     // Widok lista
     return (
-      <Link href={`/offers/${offer.id}`} className={`${card} p-4 sm:p-5 flex items-start gap-4 relative overflow-hidden`}>
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white shrink-0 overflow-hidden"
-          style={{ background: '#f97015' }}>
-          {offer.company?.companyLogoUrl
-            ? <img src={offer.company.companyLogoUrl} alt={author} className="w-full h-full object-cover" />
-            : author[0]
-          }
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-gray-900 group-hover:text-orange-500 transition-colors text-sm sm:text-base">{offer.title}</p>
-              <p className="text-sm text-gray-500 mt-0.5">{author} · 📍 {offer.city}</p>
-            </div>
-            {salary && <p className="font-black shrink-0 text-sm sm:text-base" style={{ color: '#f97015' }}>{salary}</p>}
+      <Link href={`/offers/${offer.id}`} className={`${card} p-4 sm:p-5 flex flex-col gap-4 md:flex-row md:items-start relative overflow-hidden`}>
+        <div className="flex flex-1 items-start gap-4 min-w-0">
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white shrink-0 overflow-hidden"
+            style={{ background: '#f97015' }}>
+            {offer.company?.companyLogoUrl
+              ? <img src={offer.company.companyLogoUrl} alt={author} className="w-full h-full object-cover" />
+              : author[0]
+            }
           </div>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: 'rgba(249,112,21,0.08)', color: '#f97015' }}>
-              {CATEGORY_LABELS[offer.category]}
-            </span>
-            {offer.remote        && <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">🏠 Zdalna</span>}
-            {offer.drivingLicense && <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 font-medium">🚗 Prawo jazdy</span>}
-            <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 font-medium">
-              {offer.applicationsCount} aplikacji
-            </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 group-hover:text-orange-500 transition-colors text-sm sm:text-base">{offer.title}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{author} · 📍 {offer.city}</p>
+              </div>
+              {salary && <p className="font-black shrink-0 text-sm sm:text-base" style={{ color: '#f97015' }}>{salary}</p>}
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: 'rgba(249,112,21,0.08)', color: '#f97015' }}>
+                {CATEGORY_LABELS[offer.category]}
+              </span>
+              {offer.remote        && <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">🏠 Zdalna</span>}
+              {offer.drivingLicense && <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 font-medium">🚗 Prawo jazdy</span>}
+              <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 font-medium">
+                {offer.applicationsCount} aplikacji
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Hover buttons — widoczne tylko po najechaniu */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+        <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
           <span className="text-xs font-bold px-4 py-2 rounded-xl text-white whitespace-nowrap"
             style={{ background: '#f97015' }}>
             Sprawdź ofertę
           </span>
           <button
+            type="button"
             onClick={e => { e.preventDefault(); e.stopPropagation(); setPreviewId(offer.id) }}
             className="text-xs font-bold px-4 py-2 rounded-xl border bg-white whitespace-nowrap transition-all"
             style={{ borderColor: '#f97015', color: '#f97015' }}>
             Podgląd oferty
+          </button>
+        </div>
+
+        <div className="flex md:hidden gap-2 w-full pt-3 border-t border-gray-50 -mt-1">
+          <span className="flex-1 text-center py-2.5 rounded-xl text-xs font-bold text-white touch-manipulation"
+            style={{ background: '#f97015' }}>
+            Szczegóły oferty
+          </span>
+          <button
+            type="button"
+            onClick={e => { e.preventDefault(); e.stopPropagation(); setPreviewId(offer.id) }}
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold border bg-white touch-manipulation"
+            style={{ borderColor: '#f97015', color: '#f97015' }}>
+            Podgląd
           </button>
         </div>
       </Link>
@@ -206,7 +237,9 @@ export default function OffersClientWrapper({ offers, total, pages, currentPage,
 
       {/* WIDOK MAPA */}
       {view === 'map' && (
-        <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm" style={{ height: 560 }}>
+        <div
+          className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm min-h-[280px] h-[min(560px,65dvh)] md:h-[560px]"
+        >
           <OffersMap offers={offers} />
         </div>
       )}

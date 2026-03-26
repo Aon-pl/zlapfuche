@@ -43,20 +43,20 @@ export default async function OffersPage({ searchParams }: PageProps) {
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <form className="flex-1 flex gap-3 max-w-2xl">
+            <form className="flex-1 flex flex-col gap-3 sm:flex-row sm:items-stretch max-w-2xl">
               {Object.entries(params)
                 .filter(([k]) => !['search', 'page', 'view'].includes(k))
                 .map(([k, v]) => v ? <input key={k} type="hidden" name={k} value={v} /> : null)}
-              <div className="flex-1 relative">
+              <div className="flex-1 relative min-w-0">
                 <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input name="search" defaultValue={params.search} type="text"
                   placeholder="Szukaj stanowiska, słowa kluczowego..."
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 hover:border-gray-300 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 rounded-xl text-gray-900 placeholder-gray-400 outline-none transition-all text-sm" />
+                  className="w-full min-w-0 pl-10 pr-4 py-3 bg-white border border-gray-200 hover:border-gray-300 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 rounded-xl text-gray-900 placeholder-gray-400 outline-none transition-all text-sm" />
               </div>
               <button type="submit"
-                className="px-5 py-3 font-semibold rounded-xl text-white text-sm transition-all hover:opacity-90 whitespace-nowrap"
+                className="w-full sm:w-auto px-5 py-3 font-semibold rounded-xl text-white text-sm transition-all hover:opacity-90 whitespace-nowrap touch-manipulation shrink-0"
                 style={{ background: '#f97015' }}>
                 Szukaj
               </button>

@@ -107,14 +107,20 @@ pnpm ios
 
 ### Environment / dev setup
 
-The API base URL is set in `lib/api.ts`. During development, change `API_URL` to your machine's LAN IP:
+Production and EAS builds use **`EXPO_PUBLIC_API_URL`** (see `eas.json` profiles `preview` / `production`, or `env.example`). It must be the public HTTPS URL of the Next.js API, ending with `/api`.
 
-```ts
-// lib/api.ts
-export const API_URL = __DEV__
-  ? 'http://<YOUR_LAN_IP>:3000/api'
-  : 'https://yourdomain.com/api'
-```
+For local development, set the dev fallback LAN URL in `lib/api.ts` (`__DEV__` branch) so the phone in the same Wi‑Fi can reach your machine.
+
+### Google Play (Android)
+
+1. Konto [Expo](https://expo.dev) + `eas login`; w katalogu `apps/mobile` ustaw prawdziwy backend w `eas.json` (`EXPO_PUBLIC_API_URL`).
+2. Zbuduj AAB: `pnpm build:android` (albo `npx eas-cli build --platform android --profile production`).
+3. [Google Play Console](https://play.google.com/console): utwórz aplikację, wypełnij formularz (m.in. polityka prywatności, bezpieczeństwo danych), wgraj AAB z EAS lub użyj `pnpm submit:android` po skonfigurowaniu konta usługi Google Play.
+4. **`android.package`** w `app.json` musi być stały po pierwszej publikacji — zmiana identyfikatora = nowa aplikacja w sklepie.
+
+### Expo Go (SDK)
+
+Projekt mobilny jest na **Expo SDK 54**, zgodny z aktualną **Expo Go** ze sklepu (komunikat *SDK 52 vs 54* rozwiązuje się przez `pnpm install` po zmianie `package.json` w `apps/mobile`).
 
 ### Architecture
 

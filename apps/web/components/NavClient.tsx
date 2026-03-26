@@ -119,16 +119,16 @@ export default function NavClient({ role, email }: Props) {
       className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm"
     >
       {/* ── Main bar ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 min-h-16 py-2 sm:py-0 flex items-center justify-between gap-2 sm:gap-4">
 
         {/* Logo */}
-        <Link href="/" className="shrink-0" onClick={closeAll}>
+        <Link href="/" className="shrink-0 min-w-0" onClick={closeAll}>
           <Image
             src="/IMG/logo/Logo_Zlap_Fuche.png"
             alt="PracaTymczasowa"
             width={140}
             height={36}
-            className="h-9 w-auto"
+            className="h-8 sm:h-9 w-auto max-w-[118px] sm:max-w-none object-contain object-left"
             priority
           />
         </Link>

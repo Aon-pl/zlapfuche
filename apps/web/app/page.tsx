@@ -51,7 +51,7 @@ export default async function HomePage() {
     <div style={{ background: '#FCFAF8', color: '#1D212B' }}>
 
       {/* ── HERO ── */}
-      <section className="max-w-7xl mx-auto px-6 pt-16 pb-20 grid lg:grid-cols-2 gap-12 items-center">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-20 grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-6"
             style={{ background: 'rgba(249,112,21,0.1)', color: '#f97015' }}>
@@ -69,14 +69,14 @@ export default async function HomePage() {
             Szybko, konkretnie, bez zbędnych formalności.
           </p>
 
-          <div className="flex items-center gap-3 flex-wrap mb-12">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap mb-10 sm:mb-12">
             <Link href="/offers"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
+              className="inline-flex justify-center items-center gap-2 px-6 py-3.5 sm:py-3 rounded-full font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02] touch-manipulation text-center"
               style={{ background: '#f97015', boxShadow: '0 8px 24px rgba(249,112,21,0.3)' }}>
               Przeglądaj oferty →
             </Link>
             <Link href="/offers/new"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-gray-700 bg-white border border-gray-200 transition-all hover:border-orange-300 hover:shadow-md">
+              className="inline-flex justify-center items-center gap-2 px-6 py-3.5 sm:py-3 rounded-full font-bold text-gray-700 bg-white border border-gray-200 transition-all hover:border-orange-300 hover:shadow-md touch-manipulation text-center">
               Dodaj ogłoszenie
             </Link>
           </div>
@@ -116,12 +116,12 @@ export default async function HomePage() {
       {/* ── KATEGORIE ── */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-8 sm:mb-10">
             <div>
               <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#f97015' }}>KATEGORIE</p>
-              <h2 className="text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Praca w każdej branży</h2>
+              <h2 className="text-2xl sm:text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Praca w każdej branży</h2>
             </div>
-            <Link href="/offers" className="text-sm font-bold hover:underline" style={{ color: '#f97015' }}>
+            <Link href="/offers" className="text-sm font-bold hover:underline shrink-0 touch-manipulation" style={{ color: '#f97015' }}>
               Wszystkie oferty →
             </Link>
           </div>
@@ -140,10 +140,10 @@ export default async function HomePage() {
 
       {/* ── JAK TO DZIAŁA ── */}
       <section className="py-20" style={{ background: '#FCFAF8' }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-14">
             <p className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: '#f97015' }}>JAK TO DZIAŁA</p>
-            <h2 className="text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Proste jak 1, 2, 3</h2>
+            <h2 className="text-2xl sm:text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Proste jak 1, 2, 3</h2>
           </div>
           <div className="grid lg:grid-cols-2 gap-6">
             <div className="rounded-3xl p-8" style={{ background: '#f97015' }}>
@@ -257,13 +257,13 @@ export default async function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-20 mx-6 mb-6 rounded-3xl"
+      <section className="py-14 sm:py-20 mx-4 sm:mx-6 mb-6 rounded-2xl sm:rounded-3xl"
         style={{ background: 'linear-gradient(135deg, #f97015 0%, #e85d00 100%)' }}>
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-black text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
             Gotowy do działania?
           </h2>
-          <p className="text-white/80 text-lg mb-10">
+          <p className="text-white/80 text-base sm:text-lg mb-8 sm:mb-10">
             Dołącz do tysięcy pracowników i pracodawców którzy już korzystają z naszej platformy.
           </p>
           <div className="flex items-center justify-center gap-4 flex-wrap">
