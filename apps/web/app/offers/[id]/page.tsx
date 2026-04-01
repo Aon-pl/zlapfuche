@@ -8,6 +8,7 @@ import ReviewsList from '@/components/ReviewsList'
 import ReviewForm from '@/components/ReviewForm'
 import SaveOfferButton from '@/components/SaveOfferButton'
 import DeleteOfferButton from '@/components/DeleteOfferButton'
+import { getExternalOfferById } from '@/lib/externalDb'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -23,6 +24,127 @@ const SALARY_TYPE: Record<string, string> = { hourly: 'godz.', daily: 'dzień', 
 export default async function OfferDetailPage({ params }: Props) {
   const { id }    = await params
   const session   = await auth()
+
+  if (id.startsWith('ext_')) {
+    const externalId = parseInt(id.replace('ext_', ''))
+    if (isNaN(externalId)) notFound()
+
+    const externalOffer = await getExternalOfferById(externalId)
+    if (!externalOffer) notFound()
+
+    return (
+      <div style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)', minHeight: '100vh' }}>
+        <div className="bg-white border-b border-gray-100">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+            <Link href="/offers?external=true" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-orange-500 transition-colors mb-6">
+              ← Wróć do ofert
+            </Link>
+
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-green-100 text-green-700">
+                    🌐 {externalOffer.source}
+                  </span>
+                  <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                    Zewnętrzna oferta
+                  </span>
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-4" style={{ letterSpacing: '-0.02em' }}>
+                  {externalOffer.title}
+                </h1>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-lg shrink-0 overflow-hidden bg-green-500">
+                    🌐
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">{externalOffer.source}</p>
+                    <p className="text-sm text-gray-500 mt-0.5">📍 {externalOffer.location}</p>
+                  </div>
+                </div>
+
+                {externalOffer.work_time && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+                      {externalOffer.work_time}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {externalOffer.salary && (
+                <div className="rounded-2xl px-6 py-5 text-center shrink-0 border border-green-100"
+                  style={{ background: 'rgba(34,197,94,0.05)' }}>
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Wynagrodzenie</p>
+                  <p className="text-3xl font-black text-green-600" style={{ letterSpacing: '-0.02em' }}>{externalOffer.salary}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="sm:col-span-2 space-y-4">
+            {externalOffer.description && (
+              <div className="glass-card p-5 sm:p-6">
+                <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                    style={{ background: 'rgba(34,197,94,0.1)' }}>📋</span>
+                  Opis stanowiska
+                </h2>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{externalOffer.description}</p>
+              </div>
+            )}
+
+            <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5 sm:p-6">
+              <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                  style={{ background: 'rgba(59,130,246,0.15)' }}>ℹ️</span>
+                Ważna informacja
+              </h2>
+              <p className="text-sm text-blue-700 leading-relaxed">
+                Ta oferta pochodzi z zewnętrznego źródła ({externalOffer.source}). Aby aplikować, kliknij przycisk poniżej.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <a href={externalOffer.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full font-bold px-4 py-3 rounded-xl text-sm text-white transition-all hover:opacity-90"
+              style={{ background: '#22c55e' }}>
+              Otwórz na {externalOffer.source} →
+            </a>
+
+            <div className="glass-card p-5">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Szczegóły</h3>
+              <div className="space-y-3">
+                {[
+                  externalOffer.posted_at ? { label: 'Opublikowano', value: new Date(externalOffer.posted_at).toLocaleDateString('pl-PL') } : null,
+                  externalOffer.job_date ? { label: 'Data pracy', value: new Date(externalOffer.job_date).toLocaleDateString('pl-PL') } : null,
+                  { label: 'Lokalizacja', value: externalOffer.location },
+                  externalOffer.source ? { label: 'Źródło', value: externalOffer.source } : null,
+                ].filter(Boolean).map((item: any) => (
+                  <div key={item.label} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">{item.label}</span>
+                    <span className="font-semibold text-gray-900">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {externalOffer.phone && (
+              <div className="glass-card p-5">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Kontakt</h3>
+                <p className="text-sm font-semibold text-gray-900">{externalOffer.phone}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const offer = await prisma.jobOffer.findUnique({
     where: { id },
@@ -93,10 +215,10 @@ export default async function OfferDetailPage({ params }: Props) {
     : null
   const author = offer.company?.companyName ?? (offer.person ? `${offer.person.firstName} ${offer.person.lastName}` : '')
 
-  const card = 'bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6'
+  const card = 'glass-card p-5 sm:p-6'
 
   return (
-    <div style={{ background: '#FCFAF8', minHeight: '100vh' }}>
+    <div style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)', minHeight: '100vh' }}>
 
       {/* Hero */}
       <div className="bg-white border-b border-gray-100">

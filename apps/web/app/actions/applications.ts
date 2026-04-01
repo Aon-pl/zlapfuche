@@ -11,6 +11,11 @@ export async function applyForOffer(offerId: string, coverLetter: string | null)
   if (session.user.role !== 'person') return { error: 'Tylko osoby prywatne mogą aplikować.' }
 
   try {
+    const offer = await prisma.jobOffer.findUnique({ where: { id: offerId } })
+    if (!offer) return { error: 'Oferta nie istnieje.' }
+    if (offer.status !== 'active') return { error: 'Oferta nie jest aktywna.' }
+    if (offer.endDate && offer.endDate < new Date()) return { error: 'Termin aplikacji już minął.' }
+
     const person = await prisma.personProfile.findUnique({
       where: { userId: session.user.id },
     })

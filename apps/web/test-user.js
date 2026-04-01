@@ -1,5 +1,0 @@
-const { PrismaClient } = require('@prisma/client')
-const p = new PrismaClient()
-p.user.findUnique({ where: { email: 'admin@admin.pl' } })
-  .then(u => console.log(u))
-  .finally(() => p.$disconnect())

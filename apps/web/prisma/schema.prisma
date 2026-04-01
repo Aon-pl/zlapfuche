@@ -68,6 +68,7 @@ model User {
   notifications  Notification[]
   emailVerified            Boolean                  @default(false) @map("email_verified")
   emailVerificationTokens  EmailVerificationToken[]
+
   @@map("users")
 }
 
@@ -77,7 +78,7 @@ model PersonProfile {
   firstName       String    @map("first_name")
   lastName        String    @map("last_name")
   city            String?
-  jobSeeker JobSeeker?
+  jobSeeker       JobSeeker?
   bio             String?   @db.Text
   cvUrl           String?   @map("cv_url")
   skills          String?   @db.Text
@@ -99,8 +100,8 @@ model PersonProfile {
   conversationsAsB     Conversation[] @relation("ConvPersonB")
   messagesSent         Message[]      @relation("MessagesSentByPerson")
   messagesSentAsTarget Message[] @relation("MessagesSentByTargetPerson") 
+
   @@map("person_profiles")
-  
 }
 
 model EmailVerificationToken {
@@ -123,14 +124,11 @@ model JobSeeker {
   personId       String   @unique @map("person_id")
   person         PersonProfile @relation(fields: [personId], references: [id], onDelete: Cascade)
 
-  // Widoczność ogłoszenia
   active         Boolean  @default(true)
-
-  // Dane ogłoszenia
-  title          String                    // np. "Szukam pracy w magazynie"
+  title          String
   description    String?  @db.Text
   city           String
-  skills         String?  @db.Text        // JSON array
+  skills         String?  @db.Text
   expectedSalary Int?     @map("expected_salary")
   salaryType     String   @default("hourly") @map("salary_type")
   availableFrom  DateTime? @map("available_from")
@@ -139,7 +137,6 @@ model JobSeeker {
 
   @@map("job_seekers")
 }
-
 
 model CompanyProfile {
   id             String   @id @default(cuid())
@@ -177,9 +174,9 @@ model JobOffer {
   status            JobStatus   @default(active)
   city              String
   address           String?
-  postalCode  String?  @map("postal_code")
-  lat         Float?
-  lng         Float?
+  postalCode        String?     @map("postal_code")
+  lat               Float?
+  lng               Float?
   remote            Boolean     @default(false)
   salaryMin         Float?      @map("salary_min")
   salaryMax         Float?      @map("salary_max")
@@ -196,7 +193,7 @@ model JobOffer {
   voivodeship       String?
   createdAt         DateTime    @default(now()) @map("created_at")
   updatedAt         DateTime    @updatedAt @map("updated_at")
-  expiresAt DateTime @default(dbgenerated("(NOW() + INTERVAL '30 days')")) @map("expires_at")
+  expiresAt         DateTime    @default(now()) @map("expires_at")
 
   company      CompanyProfile? @relation("CompanyOffers", fields: [companyId], references: [id], onDelete: Cascade)
   person       PersonProfile?  @relation("PersonOffers", fields: [personId], references: [id], onDelete: Cascade)
@@ -204,13 +201,7 @@ model JobOffer {
   savedBy      SavedOffer[]
   reviews      Review[]
   conversations Conversation[]
-  
 
-  @@index([city])
-  @@index([category])
-  @@index([status])
-  @@index([companyId])
-  @@index([personId])
   @@map("job_offers")
 }
 
@@ -227,8 +218,6 @@ model Application {
   applicant PersonProfile @relation(fields: [applicantId], references: [id], onDelete: Cascade)
 
   @@unique([offerId, applicantId])
-  @@index([offerId])
-  @@index([applicantId])
   @@map("applications")
 }
 
@@ -256,12 +245,11 @@ model Notification {
   message   String   @db.Text
   type      String
   read      Boolean  @default(false)
-  data      String?  @db.Text
+  data      String?   @db.Text
   createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
   @@map("notifications")
 }
 
@@ -273,7 +261,7 @@ model Review {
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
 
-  authorPersonId  String? @map("author_person_id")
+  authorPersonId   String? @map("author_person_id")
   authorCompanyId String? @map("author_company_id")
   targetPersonId  String? @map("target_person_id")
   targetCompanyId String? @map("target_company_id")
@@ -287,15 +275,12 @@ model Review {
   targetCompany CompanyProfile? @relation("ReviewsReceivedByCompany", fields: [targetCompanyId], references: [id], onDelete: Cascade)
   jobOffer      JobOffer?       @relation(fields: [jobOfferId], references: [id], onDelete: SetNull)
 
-  @@index([targetCompanyId])
-  @@index([targetPersonId])
   @@map("reviews")
 }
 
-// Typ konwersacji
 enum ConversationType {
-  person_company  // osoba <-> firma (wymaga aplikacji)
-  person_person   // osoba <-> osoba (dowolne)
+  person_company
+  person_person
 }
 
 model Conversation {
@@ -304,12 +289,10 @@ model Conversation {
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
 
-  // person<->company
   personId   String? @map("person_id")
   companyId  String? @map("company_id")
   jobOfferId String? @map("job_offer_id")
 
-  // person<->person
   personAId  String? @map("person_a_id")
   personBId  String? @map("person_b_id")
 
@@ -321,10 +304,6 @@ model Conversation {
 
   messages Message[]
 
-  @@index([personId])
-  @@index([companyId])
-  @@index([personAId])
-  @@index([personBId])
   @@map("conversations")
 }
 
@@ -344,6 +323,19 @@ model Message {
   senderCompany      CompanyProfile? @relation("MessagesSentByCompany",       fields: [senderCompanyId],      references: [id], onDelete: SetNull)
   senderTargetPerson PersonProfile?  @relation("MessagesSentByTargetPerson",  fields: [senderTargetPersonId], references: [id], onDelete: SetNull)
 
-  @@index([conversationId])
   @@map("messages")
+}
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String?
+  entityId  String?  @map("entity_id")
+  userId    String?  @map("user_id")
+  userEmail String?  @map("user_email")
+  details   String?  @db.Text
+  ip        String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_logs")
 }

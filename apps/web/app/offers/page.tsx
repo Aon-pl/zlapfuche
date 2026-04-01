@@ -1,7 +1,9 @@
 import { getOffers } from '@/app/actions/offers'
+import { getExternalOffers } from '@/lib/externalDb'
 import OffersFilters from '@/components/OffersFilters'
 import OffersClientWrapper from '@/components/OffersClientWrapper'
 export const dynamic = 'force-dynamic';
+
 interface PageProps {
   searchParams: Promise<{
     category?:       string
@@ -15,12 +17,18 @@ interface PageProps {
     sort?:           string
     view?:           string
     page?:           string
+    perPage?:        string
+    external?:       string
+    extPage?:        string
+    extLimit?:       string
   }>
 }
 
 export default async function OffersPage({ searchParams }: PageProps) {
   const params      = await searchParams
   const currentPage = params.page ? Number(params.page) : 1
+  const perPage = params.perPage ? Number(params.perPage) : 20
+  const showExternal = params.external === 'true'
 
   const { offers, total, pages } = await getOffers({
     category:       params.category,
@@ -33,47 +41,63 @@ export default async function OffersPage({ searchParams }: PageProps) {
     drivingLicense: params.drivingLicense === 'true' ? true           : undefined,
     sort:           params.sort           as 'newest' | 'salary_desc' | 'popular' | undefined,
     page:           currentPage,
-    perPage:        20,
+    perPage:        perPage,
   })
 
-  return (
-    <div style={{ background: '#FCFAF8', minHeight: '100vh' }}>
+  let externalOffersFormatted: Array<{
+    id: string
+    isExternal: true
+    source: string
+    externalUrl: string
+    title: string
+    description: string | null
+    city: string | null
+    salary: string | null
+    createdAt: Date
+    location: string | null
+    work_time: string | null
+  }> = []
+  
+  let externalTotal = 0
+  
+  if (showExternal) {
+    try {
+      const externalData = await getExternalOffers({
+        search: params.search,
+        location: params.city || undefined,
+        page: currentPage,
+        limit: perPage,
+      })
+      externalTotal = externalData.pagination.total
+      externalOffersFormatted = externalData.offers.map(offer => ({
+        id: `ext_${offer.id}`,
+        isExternal: true as const,
+        source: offer.source,
+        externalUrl: offer.url,
+        title: offer.title,
+        description: offer.description,
+        city: offer.location,
+        salary: offer.salary,
+        createdAt: offer.created_at,
+        location: offer.location,
+        work_time: offer.work_time,
+      }))
+    } catch (error) {
+      console.error('Error fetching external offers:', error)
+    }
+  }
 
-      {/* Header — wyszukiwarka */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <form className="flex-1 flex flex-col gap-3 sm:flex-row sm:items-stretch max-w-2xl">
-              {Object.entries(params)
-                .filter(([k]) => !['search', 'page', 'view'].includes(k))
-                .map(([k, v]) => v ? <input key={k} type="hidden" name={k} value={v} /> : null)}
-              <div className="flex-1 relative min-w-0">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input name="search" defaultValue={params.search} type="text"
-                  placeholder="Szukaj stanowiska, słowa kluczowego..."
-                  className="w-full min-w-0 pl-10 pr-4 py-3 bg-white border border-gray-200 hover:border-gray-300 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 rounded-xl text-gray-900 placeholder-gray-400 outline-none transition-all text-sm" />
-              </div>
-              <button type="submit"
-                className="w-full sm:w-auto px-5 py-3 font-semibold rounded-xl text-white text-sm transition-all hover:opacity-90 whitespace-nowrap touch-manipulation shrink-0"
-                style={{ background: '#f97015' }}>
-                Szukaj
-              </button>
-            </form>
-            <p className="text-sm text-gray-500 shrink-0">
-              <span className="font-bold text-gray-900">{total}</span> ofert
-            </p>
-          </div>
-        </div>
-      </div>
+  const allOffersTotal = total + externalTotal
+
+  return (
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)' }}>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="flex flex-col sm:flex-row gap-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col lg:flex-row gap-6">
 
           {/* Sidebar */}
-          <aside className="w-full sm:w-72 shrink-0">
+          <aside className="w-full lg:w-72 shrink-0">
             <OffersFilters params={params} />
           </aside>
 
@@ -81,11 +105,15 @@ export default async function OffersPage({ searchParams }: PageProps) {
           <main className="flex-1 min-w-0">
             <OffersClientWrapper
               offers={offers}
-              total={total}
-              pages={pages}
+              total={allOffersTotal}
+              totalInternal={total}
+              pages={Math.ceil(allOffersTotal / perPage)}
               currentPage={currentPage}
               params={params}
+              perPage={perPage}
               initialView={(params.view as 'list' | 'grid' | 'map') ?? 'list'}
+              showExternal={showExternal}
+              externalOffers={externalOffersFormatted}
             />
           </main>
         </div>

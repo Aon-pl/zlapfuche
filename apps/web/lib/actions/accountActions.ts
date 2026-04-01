@@ -1,6 +1,6 @@
 'use server'
 
-import { auth } from '@/auth.node'
+import { auth, signOut } from '@/auth.node'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -99,5 +99,8 @@ export async function deleteAccount(formData: FormData): Promise<{ error?: strin
   if (!valid) return { error: 'Nieprawidłowe hasło' }
 
   await prisma.user.delete({ where: { id: session.user.id } })
-  redirect('/login?deleted=1')
+  
+  await signOut({ redirect: false })
+  
+  redirect('/')
 }

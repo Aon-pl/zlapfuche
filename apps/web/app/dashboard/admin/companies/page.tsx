@@ -11,36 +11,35 @@ export default async function AdminCompaniesPage() {
     orderBy: { createdAt: 'desc' },
   })
 
-  const card = { background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.055)' }
+  const card = { background: 'rgba(30,30,50,0.6)', border: '1px solid rgba(255,255,255,0.08)' }
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="space-y-5">
       <div>
-        <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Panel admina</p>
+        <p className="text-xs font-black uppercase tracking-widest mb-1 text-white/40">Panel admina</p>
         <h1 className="text-2xl font-black text-white" style={{ letterSpacing: '-0.02em' }}>
-          Firmy <span style={{ color: 'rgba(255,255,255,0.3)' }}>({companies.length})</span>
+          Firmy <span className="text-white/30">({companies.length})</span>
         </h1>
       </div>
 
-      <div className="rounded-2xl overflow-hidden" style={card}>
+      <div className="glass-card-dark overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               {['Firma', 'Email', 'Miasto', 'NIP', 'Ofert', 'Weryfikacja', ''].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-xs font-black uppercase tracking-widest"
-                  style={{ color: 'rgba(255,255,255,0.3)' }}>{h}</th>
+                <th key={h} className="text-left px-4 py-3 text-xs font-black uppercase tracking-widest text-white/40">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {companies.map(c => (
               <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                className="hover:bg-white/[0.02] transition-colors">
+                className="hover:bg-white/5 transition-colors">
                 <td className="px-4 py-3 font-bold text-white">{c.companyName}</td>
-                <td className="px-4 py-3" style={{ color: 'rgba(255,255,255,0.55)' }}>{c.user.email}</td>
-                <td className="px-4 py-3" style={{ color: 'rgba(255,255,255,0.5)' }}>{c.city}</td>
-                <td className="px-4 py-3" style={{ color: 'rgba(255,255,255,0.4)' }}>{c.nip ?? '—'}</td>
-                <td className="px-4 py-3 text-center font-bold" style={{ color: '#E8C547' }}>
+                <td className="px-4 py-3 text-white/70">{c.user.email}</td>
+                <td className="px-4 py-3 text-white/50">{c.city}</td>
+                <td className="px-4 py-3 text-white/40">{c.nip ?? '—'}</td>
+                <td className="px-4 py-3 text-center font-bold text-[#E8C547]">
                   {c.jobOffers.length}
                 </td>
                 <td className="px-4 py-3">

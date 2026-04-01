@@ -37,10 +37,10 @@ export default async function WorkersPage({ searchParams }: PageProps) {
   }
 
   const SALARY_TYPE: Record<string, string> = { hourly: 'godz.', daily: 'dzień', monthly: 'mies.' }
-  const card = 'bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-orange-200 hover:shadow-md transition-all'
+  const card = 'glass-card p-5 flex flex-col gap-4 transition-all hover:scale-[1.01]'
 
   return (
-    <div style={{ background: '#FCFAF8', minHeight: '100vh' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)' }}>
 
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
@@ -65,15 +65,15 @@ export default async function WorkersPage({ searchParams }: PageProps) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <p className="text-sm text-gray-500 mb-5">
-          Znaleziono <span className="font-bold text-gray-900">{total}</span> ogłoszeń
+        <p className="text-sm mb-5" style={{ color: '#64748b' }}>
+          Znaleziono <span className="font-bold" style={{ color: '#1a1a2e' }}>{total}</span> ogłoszeń
         </p>
 
         {seekers.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
-            <p className="text-5xl mb-3">🔍</p>
-            <h3 className="font-bold text-gray-900 mb-1">Brak ogłoszeń</h3>
-            <p className="text-gray-500 text-sm">Spróbuj zmienić filtry</p>
+          <div className="glass-card p-16 text-center">
+            <p className="text-6xl mb-3">🔍</p>
+            <h3 className="font-bold text-lg mb-1" style={{ color: '#1a1a2e' }}>Brak ogłoszeń</h3>
+            <p className="text-sm" style={{ color: '#94a3b8' }}>Spróbuj zmienić filtry</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -82,34 +82,35 @@ export default async function WorkersPage({ searchParams }: PageProps) {
               const name   = `${seeker.person.firstName} ${seeker.person.lastName}`
 
               return (
-                <div key={seeker.id} className={card + ' p-5 flex flex-col gap-4'}>
+                <div key={seeker.id} className={card}>
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-lg shrink-0"
                       style={{ background: '#f97015' }}>
                       {name[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Link href={`/persons/${seeker.person.id}`}
-                        className="font-bold text-gray-900 hover:text-orange-500 transition-colors truncate block text-sm">
+                      <Link href={`/workers/${seeker.id}`}
+                        className="font-bold text-sm hover:text-orange-500 transition-colors truncate block"
+                        style={{ color: '#1a1a2e' }}>
                         {name}
                       </Link>
-                      <p className="text-xs text-gray-500 mt-0.5">📍 {seeker.city}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>📍 {seeker.city}</p>
                     </div>
                   </div>
 
-                  <p className="text-sm font-semibold text-gray-700 leading-snug">{seeker.title}</p>
+                  <p className="text-sm font-semibold leading-snug" style={{ color: '#374151' }}>{seeker.title}</p>
 
                   <div className="flex flex-wrap gap-1.5">
                     {seeker.experienceYears > 0 && (
-                      <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.5)', color: '#64748b' }}>
                         💼 {seeker.experienceYears} lat
                       </span>
                     )}
                     {seeker.drivingLicense && (
-                      <span className="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">🚗 Prawo jazdy</span>
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: 'rgba(255,255,255,0.5)', color: '#64748b' }}>🚗 Prawo jazdy</span>
                     )}
                     {seeker.availableFrom && (
-                      <span className="text-xs px-2.5 py-1 bg-green-100 text-green-700 rounded-full font-medium border border-green-200">
+                      <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
                         ✅ od {new Date(seeker.availableFrom).toLocaleDateString('pl-PL')}
                       </span>
                     )}
@@ -123,17 +124,17 @@ export default async function WorkersPage({ searchParams }: PageProps) {
                           {skill}
                         </span>
                       ))}
-                      {skills.length > 4 && <span className="text-xs text-gray-400">+{skills.length - 4}</span>}
+                      {skills.length > 4 && <span className="text-xs" style={{ color: '#94a3b8' }}>+{skills.length - 4}</span>}
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between mt-auto pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
                     {seeker.expectedSalary ? (
                       <span className="text-sm font-black" style={{ color: '#f97015' }}>
                         {seeker.expectedSalary} zł/{SALARY_TYPE[seeker.salaryType]}
                       </span>
                     ) : (
-                      <span className="text-sm text-gray-400">Do ustalenia</span>
+                      <span className="text-sm" style={{ color: '#94a3b8' }}>Do ustalenia</span>
                     )}
                     {session?.user.role === 'company' && companyProfileId && (
                       <StartChatButton personId={seeker.person.id} companyId={companyProfileId} label="Napisz" />

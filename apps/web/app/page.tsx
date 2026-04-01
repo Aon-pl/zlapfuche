@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { getExternalOffers } from '@/lib/externalDb'
 
 const CATEGORIES = [
   { slug: 'warehouse',     label: 'Magazyn',     icon: '📦' },
@@ -12,295 +13,329 @@ const CATEGORIES = [
   { slug: 'office',        label: 'Biuro',       icon: '💼' },
 ]
 
-const BENEFITS = [
-  { icon: '⚡', title: 'Błyskawiczna rekrutacja',  desc: 'Od ogłoszenia do zatrudnienia w ciągu 24 godzin.' },
-  { icon: '🎯', title: 'Precyzyjne dopasowanie',   desc: 'Filtry po mieście, kategorii, stawce i dostępności.' },
-  { icon: '📱', title: 'Aplikacja mobilna',        desc: 'Zarządzaj ofertami i aplikacjami z telefonu.' },
-  { icon: '🔒', title: 'Bezpieczne dane',          desc: 'Twoje dane są chronione i nigdy nie trafiają do osób trzecich.' },
-  { icon: '🎁', title: 'Zawsze za darmo',          desc: 'Dla pracowników platforma jest w 100% bezpłatna.' },
-  { icon: '🇵🇱', title: 'Tylko Polska',            desc: 'Skupiamy się wyłącznie na polskim rynku pracy.' },
-]
-
-const TESTIMONIALS = [
-  {
-    name: 'Amelia Kowalska', role: 'Pracownik magazynu', initial: 'A',
-    text: 'Dzięki PracaTymczasowa znalazłam pracę w ciągu jednego dnia! Prosty proces, bez zbędnych formalności. Polecam każdemu kto szuka pracy tymczasowej.',
-  },
-  {
-    name: 'Jakub Wiśniewski', role: 'Właściciel firmy', initial: 'J',
-    text: 'Jako pracodawca doceniam szybkość z jaką mogę znaleźć pracowników. Platforma jest intuicyjna i oszczędza mnóstwo czasu w procesie rekrutacji.',
-  },
-  {
-    name: 'Marta Nowak', role: 'Kelnerka', initial: 'M',
-    text: 'Świetna platforma! Filtry pomagają znaleźć dokładnie to czego szukam. Mogę łatwo przeglądać oferty na telefonie i aplikować jednym kliknięciem.',
-  },
-]
-
 export default async function HomePage() {
-  const [offerCount, companyCount, categoryCountsRaw] = await Promise.all([
+  const [offerCount, companyCount, categoryCountsRaw, recentOffers, recentExternal] = await Promise.all([
     prisma.jobOffer.count({ where: { status: 'active' } }),
     prisma.companyProfile.count(),
     prisma.jobOffer.groupBy({ by: ['category'], where: { status: 'active' }, _count: true }),
+    prisma.jobOffer.findMany({
+      where: { status: 'active' },
+      take: 6,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        company: { select: { companyName: true, companyLogoUrl: true } },
+        person: { select: { firstName: true, lastName: true } },
+      },
+    }),
+    getExternalOffers({ limit: 6 }).catch(() => ({ offers: [], pagination: { total: 0 } })),
   ])
 
   const categoryCounts = Object.fromEntries(
     categoryCountsRaw.map(c => [c.category, c._count])
   )
 
+  const SALARY_TYPE: Record<string, string> = { hourly: 'zł/godz', daily: 'zł/dzień', monthly: 'zł/mies' }
+
+  const externalOffers = recentExternal.offers.map(offer => ({
+    id: `ext_${offer.id}`,
+    title: offer.title,
+    location: offer.location,
+    salary: offer.salary,
+    source: offer.source,
+    url: offer.url,
+  }))
+
   return (
-    <div style={{ background: '#FCFAF8', color: '#1D212B' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)' }}>
 
       {/* ── HERO ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-20 grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-6"
-            style={{ background: 'rgba(249,112,21,0.1)', color: '#f97015' }}>
-            ⭐ Platforma pracy tymczasowej #1 w Polsce
-          </div>
-
-          <h1 className="font-black leading-tight mb-4"
-            style={{ fontSize: 'clamp(2.5rem, 5vw, 3.75rem)', letterSpacing: '-0.03em' }}>
-            Znajdź pracę.<br />
-            <span style={{ color: '#f97015' }}>Już dziś.</span>
-          </h1>
-
-          <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-md">
-            Łączymy pracowników z pracodawcami szukającymi rąk do pracy tymczasowej.
-            Szybko, konkretnie, bez zbędnych formalności.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap mb-10 sm:mb-12">
-            <Link href="/offers"
-              className="inline-flex justify-center items-center gap-2 px-6 py-3.5 sm:py-3 rounded-full font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02] touch-manipulation text-center"
-              style={{ background: '#f97015', boxShadow: '0 8px 24px rgba(249,112,21,0.3)' }}>
-              Przeglądaj oferty →
-            </Link>
-            <Link href="/offers/new"
-              className="inline-flex justify-center items-center gap-2 px-6 py-3.5 sm:py-3 rounded-full font-bold text-gray-700 bg-white border border-gray-200 transition-all hover:border-orange-300 hover:shadow-md touch-manipulation text-center">
-              Dodaj ogłoszenie
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-8 flex-wrap">
-            {[
-              { value: '300k+',             label: 'Aktywnych użytkowników' },
-              { value: String(offerCount),  label: 'Aktywnych ofert' },
-              { value: String(companyCount),label: 'Pracodawców' },
-              { value: '8',                 label: 'Kategorii pracy' },
-            ].map(s => (
-              <div key={s.label}>
-                <p className="text-2xl font-black">{s.value}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Hero ilustracja */}
-        <div className="hidden lg:flex justify-center">
-          <div className="relative w-full max-w-md aspect-square rounded-3xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #fde8d4 0%, #fef3ec 100%)' }}>
-            <div className="text-center">
-              <p className="text-8xl mb-4">👷</p>
-              <p className="text-xl font-black text-gray-700">Znajdź wymarzoną pracę</p>
-              <p className="text-gray-500 text-sm mt-1">Tysiące ofert w całej Polsce</p>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(249,112,21,0.08) 0%, rgba(249,112,21,0.02) 100%)' }} />
+        <div className="absolute top-20 left-20 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(249,112,21,0.15)' }} />
+        <div className="absolute bottom-20 right-20 w-80 h-80 rounded-full blur-3xl" style={{ background: 'rgba(249,112,21,0.1)' }} />
+        
+        <div className="relative max-w-6xl mx-auto px-6 pt-20 pb-24">
+          <div className="text-center">
+            <div className="glass-card inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold mb-8">
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: '#f97015' }}></span>
+              <span style={{ color: '#f97015' }}>Platforma pracy tymczasowej #1</span>
             </div>
-            <div className="absolute bottom-8 left-8 bg-white rounded-2xl px-4 py-3 shadow-xl">
-              <p className="text-xs text-gray-400">Aktywnych użytkowników</p>
-              <p className="text-2xl font-black" style={{ color: '#f97015' }}>300k+</p>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black mb-6 tracking-tight" style={{ color: '#1a1a2e' }}>
+              Znajdź pracę
+              <br />
+              <span style={{ color: '#f97015' }}>już dziś</span>
+            </h1>
+
+            <p className="text-lg sm:text-xl mb-10 max-w-2xl mx-auto" style={{ color: '#64748b' }}>
+              Łączymy pracowników z pracodawcami szukającymi rąk do pracy tymczasowej.
+              Szybko, konkretnie, bez zbędnych formalności.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+              <Link href="/offers"
+                className="glass-button-primary px-10 py-4 rounded-2xl font-bold text-base transition-all">
+                Przeglądaj oferty →
+              </Link>
+              <Link href="/offers/new"
+                className="glass-button px-10 py-4 rounded-2xl font-semibold text-base transition-all">
+                Dodaj ogłoszenie
+              </Link>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-8 sm:gap-14">
+              {[
+                { value: offerCount.toLocaleString('pl-PL'), label: 'Aktywnych ofert', accent: true },
+                { value: companyCount.toLocaleString('pl-PL'), label: 'Zweryfikowanych firm', accent: false },
+                { value: '50k+', label: 'Zatrudnionych', accent: false },
+              ].map(s => (
+                <div key={s.label} className="text-center">
+                  <p className={`text-3xl font-black ${s.accent ? '' : ''}`} style={{ color: s.accent ? '#f97015' : '#1a1a2e' }}>{s.value}</p>
+                  <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>{s.label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* ── KATEGORIE ── */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-8 sm:mb-10">
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#f97015' }}>KATEGORIE</p>
-              <h2 className="text-2xl sm:text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Praca w każdej branży</h2>
-            </div>
-            <Link href="/offers" className="text-sm font-bold hover:underline shrink-0 touch-manipulation" style={{ color: '#f97015' }}>
-              Wszystkie oferty →
-            </Link>
+      <section className="py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <span className="glass-badge inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
+              Kategorie
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black mb-3" style={{ color: '#1a1a2e' }}>Praca w każdej branży</h2>
+            <p style={{ color: '#64748b' }}>Wybierz sektor i znajdź idealną ofertę</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             {CATEGORIES.map(cat => (
               <Link key={cat.slug} href={`/offers?category=${cat.slug}`}
-                className="group p-5 rounded-2xl border border-gray-100 hover:border-orange-200 hover:shadow-md transition-all bg-white">
-                <p className="text-3xl mb-3">{cat.icon}</p>
-                <p className="font-bold text-gray-900 group-hover:text-orange-500 transition-colors">{cat.label}</p>
-                <p className="text-sm text-gray-400 mt-0.5">{categoryCounts[cat.slug] ?? 0} ofert dostępnych</p>
+                className="glass-card p-6 sm:p-8 text-center group transition-all hover:scale-[1.03]">
+                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center text-3xl glass-inset group-hover:scale-110 transition-transform">
+                  {cat.icon}
+                </div>
+                <p className="font-bold text-base mb-1" style={{ color: '#1a1a2e' }}>{cat.label}</p>
+                <p className="text-sm" style={{ color: '#94a3b8' }}>{categoryCounts[cat.slug] ?? 0} ofert</p>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── JAK TO DZIAŁA ── */}
-      <section className="py-20" style={{ background: '#FCFAF8' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10 sm:mb-14">
-            <p className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: '#f97015' }}>JAK TO DZIAŁA</p>
-            <h2 className="text-2xl sm:text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Proste jak 1, 2, 3</h2>
-          </div>
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="rounded-3xl p-8" style={{ background: '#f97015' }}>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-2xl">👷</span>
-                <h3 className="font-black text-white text-lg">Dla pracownika</h3>
+      {/* ── BANNER PROMOCYJNY ── */}
+      <section className="py-8 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="glass-card-gradient relative p-10 sm:p-14 text-center overflow-hidden rounded-3xl">
+            <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(34,197,94,0.2)' }} />
+            <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl" style={{ background: 'rgba(34,197,94,0.15)' }} />
+            
+            <div className="relative">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold mb-6 glass-inset" style={{ color: '#22c55e' }}>
+                🔥 Promocja
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-black mb-4" style={{ color: '#1a1a2e' }}>
+                Dodaj ofertę <span style={{ color: '#22c55e' }}>GRATIS</span>
+              </h2>
+              <p className="text-lg mb-8 max-w-xl mx-auto" style={{ color: '#64748b' }}>
+                Załóż konto pracodawcy i dodawaj nieograniczoną liczbę ofert pracy tymczasowej za darmo!
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link href="/register?role=company"
+                  className="glass-button-green px-8 py-4 rounded-2xl font-bold transition-all">
+                  Załóż konto firmy →
+                </Link>
+                <Link href="/ranking"
+                  className="glass-button px-8 py-4 rounded-2xl font-semibold transition-all">
+                  Zobacz ranking firm
+                </Link>
               </div>
-              <div className="space-y-5">
-                {[
-                  { n: '01', title: 'Utwórz profil',              desc: 'Wypełnij swój profil i dodaj CV w kilka minut.' },
-                  { n: '02', title: 'Przeglądaj oferty',          desc: 'Filtruj oferty po mieście, kategorii i stawce.' },
-                  { n: '03', title: 'Aplikuj jednym kliknięciem', desc: 'Wyślij aplikację i czekaj na odpowiedź pracodawcy.' },
-                ].map(s => (
-                  <div key={s.n} className="flex items-start gap-4">
-                    <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-xs shrink-0">{s.n}</span>
-                    <div>
-                      <p className="font-bold text-white">{s.title}</p>
-                      <p className="text-sm text-white/70 mt-0.5">{s.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link href="/register"
-                className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold bg-white hover:scale-105 transition-all"
-                style={{ color: '#f97015' }}>
-                Zacznij szukać pracy →
-              </Link>
-            </div>
-
-            <div className="rounded-3xl p-8" style={{ background: '#1D212B' }}>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-2xl">🏢</span>
-                <h3 className="font-black text-white text-lg">Dla pracodawcy</h3>
-              </div>
-              <div className="space-y-5">
-                {[
-                  { n: '01', title: 'Zarejestruj firmę',  desc: 'Załóż konto pracodawcy i uzupełnij profil firmy.' },
-                  { n: '02', title: 'Dodaj ogłoszenie',   desc: 'Opisz stanowisko, stawkę i czas trwania pracy.' },
-                  { n: '03', title: 'Wybierz kandydatów', desc: 'Przeglądaj aplikacje i kontaktuj się z najlepszymi.' },
-                ].map(s => (
-                  <div key={s.n} className="flex items-start gap-4">
-                    <span className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0"
-                      style={{ background: 'rgba(249,112,21,0.2)', color: '#f97015' }}>{s.n}</span>
-                    <div>
-                      <p className="font-bold text-white">{s.title}</p>
-                      <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{s.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Link href="/register?role=company"
-                className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-white hover:scale-105 transition-all"
-                style={{ background: '#f97015' }}>
-                Dodaj ogłoszenie →
-              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── ZALETY ── */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <p className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: '#f97015' }}>ZALETY</p>
-            <h2 className="text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Dlaczego PracaTymczasowa?</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {BENEFITS.map(b => (
-              <div key={b.title} className="p-6 rounded-2xl border border-gray-100 hover:border-orange-200 hover:shadow-md transition-all">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4"
-                  style={{ background: 'rgba(249,112,21,0.08)' }}>
-                  {b.icon}
-                </div>
-                <p className="font-bold text-gray-900 mb-1">{b.title}</p>
-                <p className="text-sm text-gray-500 leading-relaxed">{b.desc}</p>
+      {/* ── OSTATNIE OFERTY WEWNĘTRZNE ── */}
+      {recentOffers.length > 0 && (
+        <section className="py-20">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <span className="glass-badge inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-3">
+                  ✨ Nowe
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black" style={{ color: '#1a1a2e' }}>Ostatnio dodane oferty</h2>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              <Link href="/offers"
+                className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold glass-button transition-all">
+                Zobacz wszystkie
+              </Link>
+            </div>
 
-      {/* ── OPINIE ── */}
-      <section className="py-20" style={{ background: '#FCFAF8' }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-10">
-            <p className="text-xs font-black uppercase tracking-widest mb-2" style={{ color: '#f97015' }}>OPINIE</p>
-            <h2 className="text-3xl font-black" style={{ letterSpacing: '-0.02em' }}>Co mówią nasi użytkownicy</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {recentOffers.map(offer => {
+                const author = offer.company?.companyName ?? (offer.person ? `${offer.person.firstName} ${offer.person.lastName}` : '')
+                const salary = offer.salaryMin ? `${offer.salaryMin}${offer.salaryMax ? `–${offer.salaryMax}` : '+'} ${SALARY_TYPE[offer.salaryType]}` : null
+
+                return (
+                  <Link key={offer.id} href={`/offers/${offer.id}`}
+                    className="glass-card p-6 group transition-all hover:scale-[1.02]">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-xl glass-inset flex items-center justify-center font-bold text-lg shrink-0"
+                        style={{ color: '#f97015', backgroundColor: 'rgba(249,112,21,0.1)' }}>
+                        {offer.company?.companyLogoUrl ? (
+                          <img src={offer.company.companyLogoUrl} alt={author} className="w-full h-full object-cover rounded-xl" />
+                        ) : author[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-base truncate group-hover:text-orange-500 transition-colors" style={{ color: '#1a1a2e' }}>{offer.title}</p>
+                        <p className="text-sm truncate" style={{ color: '#94a3b8' }}>{author}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm mb-4" style={{ color: '#64748b' }}>
+                      <span>📍</span>
+                      <span>{offer.city}</span>
+                    </div>
+                    {salary && (
+                      <div className="inline-flex px-4 py-2 rounded-xl font-bold text-sm" style={{ backgroundColor: 'rgba(249,112,21,0.1)', color: '#f97015' }}>
+                        {salary}
+                      </div>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+
+            <div className="sm:hidden mt-6 text-center">
+              <Link href="/offers"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold" style={{ backgroundColor: 'rgba(249,112,21,0.1)', color: '#f97015' }}>
+                Zobacz wszystkie oferty →
+              </Link>
+            </div>
           </div>
-          <div className="grid sm:grid-cols-3 gap-5">
-            {TESTIMONIALS.map(t => (
-              <div key={t.name} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex gap-0.5 mb-4">
-                  {[...Array(5)].map((_, i) => <span key={i} className="text-yellow-400">★</span>)}
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-5">{t.text}</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center font-black text-white text-sm shrink-0"
-                    style={{ background: '#f97015' }}>
-                    {t.initial}
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900 text-sm">{t.name}</p>
-                    <p className="text-xs text-gray-400">{t.role}</p>
-                  </div>
-                </div>
+        </section>
+      )}
+
+      {/* ── OFERTY ZEWNĘTRZNE ── */}
+      {externalOffers.length > 0 && (
+        <section className="py-20">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-3" style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
+                  🌐 Zewnętrzne
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black" style={{ color: '#1a1a2e' }}>Oferty z OLX i innych</h2>
               </div>
-            ))}
+              <Link href="/offers?external=true"
+                className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all"
+                style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
+                Zobacz wszystkie
+              </Link>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {externalOffers.map(offer => (
+                <a key={offer.id} href={offer.url} target="_blank" rel="noopener noreferrer"
+                  className="glass-card p-6 group transition-all hover:scale-[1.02]">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg shrink-0"
+                      style={{ backgroundColor: 'rgba(34,197,94,0.1)' }}>
+                      🌐
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-base truncate group-hover:text-green-500 transition-colors" style={{ color: '#1a1a2e' }}>{offer.title}</p>
+                      <p className="text-sm" style={{ color: '#22c55e' }}>{offer.source}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm mb-4" style={{ color: '#64748b' }}>
+                    <span>📍</span>
+                    <span>{offer.location || 'Brak lokalizacji'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    {offer.salary && (
+                      <span className="font-bold text-sm" style={{ color: '#22c55e' }}>{offer.salary}</span>
+                    )}
+                    <span className="text-xs px-3 py-1 rounded-lg font-medium" style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
+                      Zobacz →
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+
+            <div className="sm:hidden mt-6 text-center">
+              <Link href="/offers?external=true"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold"
+                style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
+                Zobacz wszystkie zewnętrzne →
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── CTA ── */}
-      <section className="py-14 sm:py-20 mx-4 sm:mx-6 mb-6 rounded-2xl sm:rounded-3xl"
-        style={{ background: 'linear-gradient(135deg, #f97015 0%, #e85d00 100%)' }}>
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
-            Gotowy do działania?
-          </h2>
-          <p className="text-white/80 text-base sm:text-lg mb-8 sm:mb-10">
-            Dołącz do tysięcy pracowników i pracodawców którzy już korzystają z naszej platformy.
-          </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link href="/offers"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold bg-white hover:scale-105 transition-all shadow-xl"
-              style={{ color: '#f97015' }}>
-              Szukam pracy →
-            </Link>
-            <Link href="/register?role=company"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-white border-2 border-white/40 hover:bg-white/10 transition-all">
-              Szukam pracowników
-            </Link>
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="glass-card-gradient relative p-12 sm:p-16 text-center overflow-hidden rounded-3xl">
+            <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(249,112,21,0.15)' }} />
+            
+            <div className="relative">
+              <h2 className="text-3xl sm:text-5xl font-black mb-4" style={{ color: '#1a1a2e' }}>
+                Gotowy start?
+              </h2>
+              <p className="text-lg mb-10 max-w-xl mx-auto" style={{ color: '#64748b' }}>
+                Dołącz do tysięcy Polaków, którzy już znaleźli pracę dzięki PracaTymczasowa.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link href="/offers"
+                  className="glass-button-primary px-10 py-4 rounded-2xl font-bold text-base transition-all">
+                  Szukam pracy →
+                </Link>
+                <Link href="/register"
+                  className="glass-button px-10 py-4 rounded-2xl font-semibold text-base transition-all">
+                  Załóż konto
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ background: '#1D212B' }}>
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row justify-between gap-8">
+      <footer style={{ backgroundColor: '#1e293b' }}>
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="flex flex-col md:flex-row justify-between gap-12 mb-12">
             <div>
-              <p className="font-black text-white text-lg mb-2">PracaTymczasowa</p>
-              <p className="text-sm max-w-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <p className="font-black text-2xl mb-3" style={{ color: '#f97015' }}>PracaTymczasowa</p>
+              <p className="text-sm max-w-xs" style={{ color: '#94a3b8' }}>
                 Platforma łącząca pracowników z pracodawcami w całej Polsce.
               </p>
             </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>Kontakt</p>
-              <div className="space-y-2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                <Link href="/privacy" className="block hover:text-white transition-colors">Prywatność</Link>
-                <Link href="/terms"   className="block hover:text-white transition-colors">Regulamin</Link>
-                <p>+48 123 456 789</p>
+            <div className="grid grid-cols-2 gap-10">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: '#64748b' }}>Platforma</p>
+                <div className="space-y-3 text-sm" style={{ color: '#94a3b8' }}>
+                  <Link href="/offers" className="block hover:text-orange-400 transition-colors">Oferty pracy</Link>
+                  <Link href="/workers" className="block hover:text-orange-400 transition-colors">Kandydaci</Link>
+                  <Link href="/ranking" className="block hover:text-orange-400 transition-colors">Ranking firm</Link>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-4" style={{ color: '#64748b' }}>Informacje</p>
+                <div className="space-y-3 text-sm" style={{ color: '#94a3b8' }}>
+                  <Link href="/privacy" className="block hover:text-orange-400 transition-colors">Prywatność</Link>
+                  <Link href="/terms" className="block hover:text-orange-400 transition-colors">Regulamin</Link>
+                  <Link href="/contact" className="block hover:text-orange-400 transition-colors">Kontakt</Link>
+                </div>
               </div>
             </div>
           </div>
-          <div className="mt-10 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <div className="pt-8 border-t border-white/10">
+            <p className="text-sm text-center" style={{ color: '#64748b' }}>
               © {new Date().getFullYear()} PracaTymczasowa. Wszelkie prawa zastrzeżone.
             </p>
           </div>

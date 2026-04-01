@@ -48,10 +48,10 @@ export default async function RankingPage({ searchParams }: PageProps) {
   const MEDALS = ['🥇', '🥈', '🥉']
 
   return (
-    <div style={{ background: '#FCFAF8', minHeight: '100vh' }}>
+    <div style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)', minHeight: '100vh' }}>
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="glass-inset border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1" style={{ letterSpacing: '-0.02em' }}>
             🏆 Ranking pracodawców
@@ -62,15 +62,16 @@ export default async function RankingPage({ searchParams }: PageProps) {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <p className="text-sm text-gray-500 mb-5">
-          <span className="font-bold text-gray-900">{total}</span> firm
-          {params.city && <span className="text-orange-500 ml-1">· {params.city}</span>}
+        <p className="text-sm mb-5" style={{ color: '#64748b' }}>
+          Znaleziono <span className="font-bold" style={{ color: '#1a1a2e' }}>{total}</span> firm
+          {params.city && <span style={{ color: '#f97015' }} className="ml-1">· {params.city}</span>}
         </p>
 
         {paginated.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+          <div className="glass-card p-16 text-center">
             <p className="text-4xl mb-3">🔍</p>
-            <p className="font-bold text-gray-900">Brak wyników</p>
+            <p className="font-bold text-lg mb-1" style={{ color: '#1a1a2e' }}>Brak wyników</p>
+            <p className="text-sm" style={{ color: '#94a3b8' }}>Spróbuj zmienić filtry</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -78,7 +79,7 @@ export default async function RankingPage({ searchParams }: PageProps) {
               const rank = (currentPage - 1) * perPage + index + 1
               return (
                 <Link key={company.id} href={`/companies/${company.id}`}
-                  className="flex items-center gap-4 bg-white border border-gray-100 hover:border-orange-200 hover:shadow-md rounded-2xl px-4 sm:px-5 py-4 transition-all group shadow-sm">
+                  className="glass-card flex items-center gap-4 px-4 sm:px-5 py-4 transition-all hover:scale-[1.01] hover:shadow-lg">
 
                   {/* Pozycja */}
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
@@ -136,7 +137,7 @@ export default async function RankingPage({ searchParams }: PageProps) {
                 className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${
                   p === currentPage
                     ? 'text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300'
+                    : 'glass-card text-gray-600 hover:border-orange-300'
                 }`}
                 style={p === currentPage ? { background: '#f97015' } : {}}>
                 {p}

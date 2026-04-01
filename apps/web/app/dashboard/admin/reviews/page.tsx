@@ -14,19 +14,17 @@ export default async function AdminReviewsPage() {
     orderBy: { createdAt: 'desc' },
   })
 
-  const card = { background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.055)' }
-
   const TYPE_LABEL: Record<string, string> = {
     person_reviews_company:  'Osoba → Firma',
     company_reviews_person:  'Firma → Osoba',
   }
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="space-y-5">
       <div>
-        <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Panel admina</p>
+        <p className="text-xs font-black uppercase tracking-widest mb-1 text-white/40">Panel admina</p>
         <h1 className="text-2xl font-black text-white" style={{ letterSpacing: '-0.02em' }}>
-          Opinie <span style={{ color: 'rgba(255,255,255,0.3)' }}>({reviews.length})</span>
+          Opinie <span className="text-white/30">({reviews.length})</span>
         </h1>
       </div>
 
@@ -40,15 +38,15 @@ export default async function AdminReviewsPage() {
             : r.targetCompany?.companyName ?? '—'
 
           return (
-            <div key={r.id} className="rounded-2xl p-4 flex items-start gap-4" style={card}>
+            <div key={r.id} className="glass-card-dark p-4 flex items-start gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 flex-wrap mb-1">
                   <span className="text-xs font-bold px-2.5 py-1 rounded-full"
-                    style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                    style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}>
                     {TYPE_LABEL[r.type] ?? r.type}
                   </span>
                   <StarRating value={r.rating} size="sm" showValue />
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  <span className="text-xs text-white/40">
                     {new Date(r.createdAt).toLocaleDateString('pl-PL')}
                   </span>
                 </div>
@@ -56,12 +54,12 @@ export default async function AdminReviewsPage() {
                   {author} → {target}
                 </p>
                 {r.jobOffer && (
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-xs mt-0.5 text-white/50">
                     📋 {r.jobOffer.title}
                   </p>
                 )}
                 {r.comment && (
-                  <p className="text-sm mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  <p className="text-sm mt-2 leading-relaxed text-white/70">
                     {r.comment}
                   </p>
                 )}

@@ -15,9 +15,9 @@ export default function AdminActionButton({ endpoint, label, body, variant = 'de
   const router = useRouter()
 
   const STYLES = {
-    success: { background: 'rgba(52,211,153,0.1)',  color: '#34d399', border: '1px solid rgba(52,211,153,0.2)'  },
-    warning: { background: 'rgba(245,158,11,0.1)',  color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)'  },
-    default: { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' },
+    success: { background: 'rgba(52,211,153,0.15)',  color: '#34d399', border: '1px solid rgba(52,211,153,0.2)'  },
+    warning: { background: 'rgba(245,158,11,0.15)',  color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)'  },
+    default: { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)' },
   }
 
   function handleClick() {

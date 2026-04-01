@@ -41,8 +41,8 @@ export default function SaveOfferButton({ offerId, initialSaved, isLoggedIn }: P
       title={saved ? 'Usuń z ulubionych' : 'Zapisz ofertę'}
       className="flex items-center gap-2 font-bold px-4 py-2.5 rounded-xl text-sm transition hover:opacity-80 disabled:opacity-40 w-full justify-center"
       style={saved
-        ? { background: 'rgba(232,197,71,0.15)', color: '#E8C547', border: '1px solid rgba(232,197,71,0.3)' }
-        : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.1)' }
+        ? { background: 'rgba(249,112,21,0.15)', color: '#f97015', border: '1px solid rgba(249,112,21,0.3)' }
+        : { background: 'rgba(255,255,255,0.5)', color: '#64748b', border: '1px solid rgba(255,255,255,0.5)' }
       }
     >
       {loading ? (

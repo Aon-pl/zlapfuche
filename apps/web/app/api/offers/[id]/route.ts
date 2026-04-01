@@ -28,6 +28,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (user.role !== 'person') return apiError('Tylko osoby prywatne mogą aplikować.', 403)
     if (!user.personProfile) return apiError('Brak profilu.', 400)
 
+    const offer = await prisma.jobOffer.findUnique({ where: { id } })
+    if (!offer) return apiError('Oferta nie istnieje.', 404)
+    if (offer.status !== 'active') return apiError('Oferta nie jest aktywna.', 400)
+    if (offer.endDate && offer.endDate < new Date()) return apiError('Termin aplikacji już minął.', 400)
+
     const { coverLetter } = await req.json()
 
     const app = await prisma.application.create({

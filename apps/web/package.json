@@ -6,7 +6,8 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "expire": "npx tsx scripts/expire-offers.ts"
   },
   "dependencies": {
     "@prisma/client": "5",
@@ -15,6 +16,7 @@
     "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.3",
     "leaflet": "^1.9.4",
+    "mysql2": "^3.20.0",
     "next": "16.1.6",
     "next-auth": "5.0.0-beta.30",
     "nodemailer": "^8.0.3",
@@ -35,6 +37,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

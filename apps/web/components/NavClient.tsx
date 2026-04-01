@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter, usePathname } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import NotificationBell from '@/components/NotificationBell'
 import ChatBell from '@/components/ChatBell'
@@ -32,8 +33,8 @@ function getNavItems(role: Role): NavItem[] {
       label: 'Oferty',
       children: [
         { label: 'Przeglądaj oferty',   href: '/offers',   icon: '🔍' },
-        { label: 'Szukam pracy',         href: '/workers',  icon: '👷' },
-        { label: 'Dodaj ogłoszenie',     href: '/offers/new', icon: '➕' },
+        { label: 'Szukam pracy',        href: '/workers',  icon: '👷' },
+        { label: 'Dodaj ogłoszenie',    href: '/offers/new', icon: '➕' },
       ],
     },
     {
@@ -50,8 +51,8 @@ function getNavItems(role: Role): NavItem[] {
     {
       label: 'Oferty',
       children: [
-        { label: 'Przeglądaj oferty', href: '/offers',    icon: '🔍' },
-        { label: 'Dodaj ogłoszenie',  href: '/offers/new', icon: '➕' },
+        { label: 'Przeglądaj oferty',  href: '/offers',    icon: '🔍' },
+        { label: 'Dodaj ogłoszenie',   href: '/offers/new', icon: '➕' },
       ],
     },
     { label: 'Ranking firm', href: '/ranking' },
@@ -87,7 +88,10 @@ function Chevron({ open }: { open: boolean }) {
 export default function NavClient({ role, email }: Props) {
   const [mobileOpen,   setMobileOpen]   = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const pathname = usePathname()
 
   const navItems = getNavItems(role)
   const initials = email ? email[0].toUpperCase() : '?'
@@ -113,54 +117,74 @@ export default function NavClient({ role, email }: Props) {
     setMobileOpen(false)
   }
 
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/offers?search=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
+
   return (
     <header
       ref={wrapperRef}
-      className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm"
+      className="sticky top-0 z-50 main-nav"
     >
       {/* ── Main bar ── */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 min-h-16 py-2 sm:py-0 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 min-h-14 flex items-center justify-between gap-4">
 
         {/* Logo */}
-        <Link href="/" className="shrink-0 min-w-0" onClick={closeAll}>
+        <Link href="/" className="shrink-0" onClick={closeAll}>
           <Image
             src="/IMG/logo/Logo_Zlap_Fuche.png"
             alt="PracaTymczasowa"
-            width={140}
-            height={36}
-            className="h-8 sm:h-9 w-auto max-w-[118px] sm:max-w-none object-contain object-left"
+            width={130}
+            height={34}
+            className="h-8 w-auto object-contain"
             priority
           />
         </Link>
 
+        {/* ── Search bar (desktop) ── */}
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md">
+          <div className="relative w-full">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9ca3af' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Szukaj..."
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm outline-none focus:border-orange-400 focus:bg-white transition-all"
+              style={{ color: '#1a1a2e' }}
+            />
+          </div>
+        </form>
+
         {/* ── Desktop navigation ── */}
-        <nav className="hidden md:flex items-center gap-0.5 flex-1">
+        <nav className="hidden lg:flex items-center gap-1">
           {navItems.map(item =>
             item.children ? (
-              /* Dropdown item */
               <div key={item.label} className="relative">
                 <button
                   onClick={() => toggleDropdown(item.label)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors
-                    ${openDropdown === item.label
-                      ? 'text-orange-500 bg-orange-50'
-                      : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50'
-                    }`}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium transition-colors
+                    ${openDropdown === item.label ? 'text-orange-500' : 'text-gray-600 hover:text-orange-500'}`}
                 >
                   {item.label}
                   <Chevron open={openDropdown === item.label} />
                 </button>
 
                 {openDropdown === item.label && (
-                  <div className="absolute top-full left-0 mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
                     {item.children.map(child => (
                       <Link
                         key={child.href}
                         href={child.href}
                         onClick={closeAll}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-orange-500 hover:bg-gray-50 transition-colors"
                       >
-                        <span className="text-base">{child.icon}</span>
+                        <span>{child.icon}</span>
                         {child.label}
                       </Link>
                     ))}
@@ -168,11 +192,10 @@ export default function NavClient({ role, email }: Props) {
                 )}
               </div>
             ) : (
-              /* Plain link */
               <Link
                 key={item.label}
                 href={item.href!}
-                className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-600 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                className="px-3 py-1.5 rounded text-sm font-medium text-gray-600 hover:text-orange-500 transition-colors"
               >
                 {item.label}
               </Link>
@@ -181,7 +204,15 @@ export default function NavClient({ role, email }: Props) {
         </nav>
 
         {/* ── Right-side actions ── */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-2">
+
+          {/* Search button (mobile) */}
+          <Link href="/offers"
+            className="md:hidden flex items-center justify-center w-9 h-9">
+            <svg className="w-5 h-5" style={{ color: '#6b7280' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </Link>
 
           {/* Chat + notifications (logged in, non-admin) */}
           {role && role !== 'admin' && (
@@ -197,26 +228,23 @@ export default function NavClient({ role, email }: Props) {
             <div className="relative ml-1">
               <button
                 onClick={() => toggleDropdown('user')}
-                className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2"
               >
                 <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black text-white shrink-0"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
                   style={{ background: '#f97015' }}
                 >
                   {initials}
-                </span>
-                <span className="hidden lg:block text-sm font-semibold text-gray-700 max-w-[130px] truncate">
-                  {email}
                 </span>
                 <Chevron open={openDropdown === 'user'} />
               </button>
 
               {openDropdown === 'user' && (
-                <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50">
+                <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
                   <Link
                     href="/profile"
                     onClick={closeAll}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-orange-500 hover:bg-gray-50"
                   >
                     <span>👤</span> Mój profil
                   </Link>
@@ -224,7 +252,7 @@ export default function NavClient({ role, email }: Props) {
                   <form action={logout}>
                     <button
                       type="submit"
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-red-500 hover:bg-red-50"
                     >
                       <span>🚪</span> Wyloguj się
                     </button>
@@ -235,35 +263,35 @@ export default function NavClient({ role, email }: Props) {
 
           ) : (
             /* ── Guest buttons (desktop) ── */
-            <div className="hidden md:flex items-center gap-2 ml-1">
+            <div className="hidden lg:flex items-center gap-2">
               <Link
                 href="/login"
-                className="px-3 py-2 text-sm font-semibold text-gray-600 hover:text-orange-500 rounded-lg hover:bg-orange-50 transition-colors"
+                className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-orange-500 transition-colors"
               >
                 Zaloguj się
               </Link>
               <Link
                 href="/register"
-                className="text-sm font-bold px-5 py-2 rounded-full text-white transition-all hover:opacity-90 hover:scale-105"
+                className="text-sm font-medium px-4 py-1.5 rounded text-white transition-colors hover:opacity-90"
                 style={{ background: '#f97015' }}
               >
-                Dołącz za darmo
+                Dołącz
               </Link>
             </div>
           )}
 
           {/* ── Hamburger (mobile) ── */}
           <button
-            className="md:hidden ml-1 flex flex-col justify-center items-center w-9 h-9 gap-[5px] rounded-lg hover:bg-gray-100 transition-colors"
+            className="lg:hidden flex flex-col justify-center items-center w-9 h-9"
             onClick={() => setMobileOpen(prev => !prev)}
             aria-label={mobileOpen ? 'Zamknij menu' : 'Otwórz menu'}
           >
             {mobileOpen ? (
-              <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-5 h-5" style={{ color: '#6b7280' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
-              <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-5 h-5" style={{ color: '#6b7280' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             )}
@@ -273,13 +301,30 @@ export default function NavClient({ role, email }: Props) {
 
       {/* ── Mobile menu ── */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white">
-          <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-0.5">
+        <div className="lg:hidden border-t border-gray-100 bg-white">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1">
+
+            {/* Mobile search */}
+            <form onSubmit={handleSearch} className="mb-2">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9ca3af' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Szukaj..."
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm outline-none focus:border-orange-400 focus:bg-white"
+                  style={{ color: '#1a1a2e' }}
+                />
+              </div>
+            </form>
 
             {navItems.map(item =>
               item.children ? (
                 <div key={item.label}>
-                  <p className="px-3 pt-3 pb-1 text-xs font-black text-gray-400 uppercase tracking-widest">
+                  <p className="px-2 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide" style={{ color: '#9ca3af' }}>
                     {item.label}
                   </p>
                   {item.children.map(child => (
@@ -287,7 +332,7 @@ export default function NavClient({ role, email }: Props) {
                       key={child.href}
                       href={child.href}
                       onClick={closeAll}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                      className="flex items-center gap-2 px-2 py-2 text-sm text-gray-600 hover:text-orange-500"
                     >
                       <span>{child.icon}</span>
                       {child.label}
@@ -299,7 +344,7 @@ export default function NavClient({ role, email }: Props) {
                   key={item.label}
                   href={item.href!}
                   onClick={closeAll}
-                  className="px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                  className="px-2 py-2 text-sm font-medium text-gray-600 hover:text-orange-500"
                 >
                   {item.label}
                 </Link>
@@ -308,18 +353,18 @@ export default function NavClient({ role, email }: Props) {
 
             {/* Mobile: profil + wyloguj (zalogowany) */}
             {email && (
-              <div className="mt-2 pt-3 border-t border-gray-100 flex flex-col gap-0.5">
+              <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-1">
                 <Link
                   href="/profile"
                   onClick={closeAll}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                  className="flex items-center gap-2 px-2 py-2 text-sm text-gray-600 hover:text-orange-500"
                 >
                   <span>👤</span> Mój profil
                 </Link>
                 <form action={logout}>
                   <button
                     type="submit"
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-2 py-2 text-sm text-gray-500 hover:text-red-500"
                   >
                     <span>🚪</span> Wyloguj się
                   </button>
@@ -329,18 +374,18 @@ export default function NavClient({ role, email }: Props) {
 
             {/* Mobile: przyciski gościa */}
             {!email && (
-              <div className="mt-2 pt-3 border-t border-gray-100 flex flex-col gap-2">
+              <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
                 <Link
                   href="/login"
                   onClick={closeAll}
-                  className="text-center py-2.5 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="text-center py-2 text-sm font-medium text-gray-600 hover:text-orange-500"
                 >
                   Zaloguj się
                 </Link>
                 <Link
                   href="/register"
                   onClick={closeAll}
-                  className="text-center py-2.5 rounded-full text-sm font-bold text-white transition-all hover:opacity-90"
+                  className="text-center py-2 text-sm font-medium text-white rounded"
                   style={{ background: '#f97015' }}
                 >
                   Dołącz za darmo

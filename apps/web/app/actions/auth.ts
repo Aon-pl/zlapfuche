@@ -44,9 +44,17 @@ export async function register(formData: FormData) {
     })
     userId = user.id
   } else {
-    const companyName = formData.get('companyName') as string
+    const companyName  = formData.get('companyName') as string
     const city        = formData.get('city') as string
+    const nip         = formData.get('nip') as string | null
+    const address     = formData.get('address') as string | null
+
     if (!companyName || !city) return { error: 'Podaj nazwę firmy i miasto.' }
+    if (!nip) return { error: 'NIP jest wymagany.' }
+
+    if (!/^\d{10}$/.test(nip)) {
+      return { error: 'NIP musi składać się z 10 cyfr.' }
+    }
 
     const user = await prisma.user.create({
       data: {
@@ -55,7 +63,12 @@ export async function register(formData: FormData) {
         role: 'company',
         emailVerified: false,
         companyProfile: {
-          create: { companyName, city },
+          create: { 
+            companyName, 
+            city,
+            nip,
+            address: address || null,
+          },
         },
       },
     })

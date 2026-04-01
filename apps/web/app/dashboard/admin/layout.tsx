@@ -8,9 +8,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (session.user.role !== 'admin') redirect('/dashboard')
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#0d0d14' }}>
+    <div className="min-h-screen flex"
+      style={{
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        backgroundAttachment: 'fixed',
+      }}>
       <AdminSidebar />
-      <main className="flex-1 min-w-0 overflow-auto">
+      <main className="flex-1 min-w-0 overflow-auto p-6">
         {children}
       </main>
     </div>
