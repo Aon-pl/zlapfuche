@@ -14,7 +14,13 @@ export default async function JobSeekerProfilePage({ params }: Props) {
     where: { id },
     include: { 
       person: { 
-        select: { id: true, firstName: true, lastName: true, city: true } 
+        select: { 
+          id: true, 
+          firstName: true, 
+          lastName: true, 
+          city: true,
+          user: { select: { isSuperFuchowicz: true } },
+        } 
       } 
     },
   })
@@ -49,7 +55,15 @@ export default async function JobSeekerProfilePage({ params }: Props) {
               <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1" style={{ letterSpacing: '-0.02em' }}>
                 {fullName}
               </h1>
-              <p className="text-sm text-gray-500">📍 {seeker.city}</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <p className="text-sm text-gray-500">📍 {seeker.city}</p>
+                {seeker.person.user.isSuperFuchowicz && (
+                  <span className="text-sm px-3 py-1 rounded-full font-bold"
+                    style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', color: '#fff' }}>
+                    ⭐ Super-Fuchowicz
+                  </span>
+                )}
+              </div>
               
               <div className="flex flex-wrap gap-2 mt-3">
                 {seeker.experienceYears > 0 && (

@@ -23,8 +23,19 @@ export default async function WorkersPage({ searchParams }: PageProps) {
   const [seekers, total] = await Promise.all([
     prisma.jobSeeker.findMany({
       where,
-      include: { person: { select: { id: true, firstName: true, lastName: true } } },
-      orderBy: { createdAt: 'desc' },
+      include: { 
+        person: { 
+          select: { 
+            id: true, 
+            firstName: true, 
+            lastName: true,
+            user: { select: { isSuperFuchowicz: true } },
+          } 
+        } 
+      },
+      orderBy: { 
+        person: { user: { isSuperFuchowicz: 'desc' } }
+      },
       take: perPage, skip: (currentPage - 1) * perPage,
     }),
     prisma.jobSeeker.count({ where }),
@@ -94,7 +105,15 @@ export default async function WorkersPage({ searchParams }: PageProps) {
                         style={{ color: '#1a1a2e' }}>
                         {name}
                       </Link>
-                      <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>📍 {seeker.city}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs" style={{ color: '#94a3b8' }}>📍 {seeker.city}</p>
+                        {seeker.person.user.isSuperFuchowicz && (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                            style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', color: '#fff' }}>
+                            ⭐ Super-Fuchowicz
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

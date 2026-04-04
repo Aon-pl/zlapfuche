@@ -45,6 +45,7 @@ enum ApplicationStatus {
   viewed
   accepted
   rejected
+  completed
 }
 
 enum ReviewType {
@@ -62,6 +63,10 @@ model User {
   avatarUrl String?  @map("avatar_url")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  isSuperFuchowicz        Boolean   @default(false) @map("is_super_fuchowicz")
+  superFuchowiczGrantedBy String?   @map("super_fuchowicz_granted_by")
+  superFuchowiczGrantedAt DateTime? @map("super_fuchowicz_granted_at")
 
   personProfile  PersonProfile?
   companyProfile CompanyProfile?
@@ -338,4 +343,22 @@ model SystemLog {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("system_logs")
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String
+  content     String?  @db.Text
+  imageUrl    String?  @map("image_url")
+  mobileImageUrl String? @map("mobile_image_url")
+  linkUrl     String?  @map("link_url")
+  position    String   @default("offers") // offers, home
+  active      Boolean  @default(true)
+  order       Int      @default(0)
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("banners")
 }

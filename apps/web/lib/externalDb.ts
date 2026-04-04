@@ -5,7 +5,7 @@ const pool = mysql.createPool({
   port: parseInt(process.env.JOB_SCRAPER_DB_PORT || '3306'),
   user: process.env.JOB_SCRAPER_DB_USER || 'root',
   password: process.env.JOB_SCRAPER_DB_PASSWORD || '',
-  database: 'job_scraper',
+  database: 'serwer278713_jobscraper',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,

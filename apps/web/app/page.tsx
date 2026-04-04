@@ -14,7 +14,8 @@ const CATEGORIES = [
 ]
 
 export default async function HomePage() {
-  const [offerCount, companyCount, categoryCountsRaw, recentOffers, recentExternal] = await Promise.all([
+  const now = new Date()
+  const [offerCount, companyCount, categoryCountsRaw, recentOffers, recentExternal, homeBanners] = await Promise.all([
     prisma.jobOffer.count({ where: { status: 'active' } }),
     prisma.companyProfile.count(),
     prisma.jobOffer.groupBy({ by: ['category'], where: { status: 'active' }, _count: true }),
@@ -28,6 +29,25 @@ export default async function HomePage() {
       },
     }),
     getExternalOffers({ limit: 6 }).catch(() => ({ offers: [], pagination: { total: 0 } })),
+    prisma.banner.findMany({
+      where: {
+        position: 'home',
+        active: true,
+        OR: [
+          { startDate: null },
+          { startDate: { lte: now } },
+        ],
+        AND: [
+          {
+            OR: [
+              { endDate: null },
+              { endDate: { gte: now } },
+            ],
+          },
+        ],
+      },
+      orderBy: { order: 'asc' },
+    }),
   ])
 
   const categoryCounts = Object.fromEntries(
@@ -90,7 +110,7 @@ export default async function HomePage() {
                 { value: '50k+', label: 'Zatrudnionych', accent: false },
               ].map(s => (
                 <div key={s.label} className="text-center">
-                  <p className={`text-3xl font-black ${s.accent ? '' : ''}`} style={{ color: s.accent ? '#f97015' : '#1a1a2e' }}>{s.value}</p>
+                  <p className="text-3xl font-black" style={{ color: s.accent ? '#f97015' : '#1a1a2e' }}>{s.value}</p>
                   <p className="text-sm mt-1" style={{ color: '#94a3b8' }}>{s.label}</p>
                 </div>
               ))}
@@ -98,6 +118,33 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── BANERY ── */}
+      {homeBanners.length > 0 && (
+        <section className="py-6 px-6">
+          <div className="max-w-6xl mx-auto space-y-3">
+            {homeBanners.map(banner => (
+              banner.imageUrl || banner.mobileImageUrl ? (
+                <a key={banner.id} href={banner.linkUrl || '#'} target={banner.linkUrl?.startsWith('http') ? '_blank' : '_self'}
+                  className="block rounded-xl overflow-hidden transition-all hover:opacity-95">
+                  <picture>
+                    {banner.mobileImageUrl && (
+                      <source srcSet={banner.mobileImageUrl} media="(max-width: 639px)" />
+                    )}
+                    <img src={banner.imageUrl || banner.mobileImageUrl || ''} alt={banner.title} className="w-full h-auto object-cover" style={{ maxHeight: '150px' }} />
+                  </picture>
+                </a>
+              ) : (
+                <a key={banner.id} href={banner.linkUrl || '#'} target={banner.linkUrl?.startsWith('http') ? '_blank' : '_self'}
+                  className="block glass-card p-4 rounded-xl transition-all hover:scale-[1.01]" style={{ background: 'linear-gradient(135deg, rgba(249,112,21,0.1) 0%, rgba(249,112,21,0.05) 100%)' }}>
+                  <p className="font-bold text-base" style={{ color: '#f97015' }}>{banner.title}</p>
+                  {banner.content && <p className="text-sm mt-1" style={{ color: '#64748b' }}>{banner.content}</p>}
+                </a>
+              )
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── KATEGORIE ── */}
       <section className="py-20">
@@ -174,35 +221,42 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {recentOffers.map(offer => {
                 const author = offer.company?.companyName ?? (offer.person ? `${offer.person.firstName} ${offer.person.lastName}` : '')
                 const salary = offer.salaryMin ? `${offer.salaryMin}${offer.salaryMax ? `–${offer.salaryMax}` : '+'} ${SALARY_TYPE[offer.salaryType]}` : null
 
                 return (
                   <Link key={offer.id} href={`/offers/${offer.id}`}
-                    className="glass-card p-6 group transition-all hover:scale-[1.02]">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-xl glass-inset flex items-center justify-center font-bold text-lg shrink-0"
-                        style={{ color: '#f97015', backgroundColor: 'rgba(249,112,21,0.1)' }}>
+                    className="glass-card p-5 transition-all group relative overflow-hidden hover:scale-[1.02]">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #f97015 0%, #ea6c00 100%)', color: 'white' }}>
                         {offer.company?.companyLogoUrl ? (
                           <img src={offer.company.companyLogoUrl} alt={author} className="w-full h-full object-cover rounded-xl" />
                         ) : author[0]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-base truncate group-hover:text-orange-500 transition-colors" style={{ color: '#1a1a2e' }}>{offer.title}</p>
-                        <p className="text-sm truncate" style={{ color: '#94a3b8' }}>{author}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ backgroundColor: 'rgba(249,112,21,0.1)', color: '#f97015' }}>
+                            {offer.category.charAt(0).toUpperCase() + offer.category.slice(1)}
+                          </span>
+                          {offer.remote && <span className="text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 font-medium">🏠</span>}
+                        </div>
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <p className="font-bold line-clamp-2 leading-snug" style={{ color: '#1a1a2e' }}>{offer.title}</p>
+                          {salary && <p className="font-bold shrink-0 text-sm" style={{ color: '#f97015' }}>{salary}</p>}
+                        </div>
+                        <p className="text-sm mt-0.5" style={{ color: '#94a3b8' }}>📍 {offer.city}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm mb-4" style={{ color: '#64748b' }}>
-                      <span>📍</span>
-                      <span>{offer.city}</span>
+                    {/* Hover button */}
+                    <div className="hidden lg:flex absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+                      <span className="text-xs font-bold px-4 py-2 rounded-xl text-white whitespace-nowrap"
+                        style={{ background: '#f97015' }}>
+                        Sprawdź szczegóły
+                      </span>
                     </div>
-                    {salary && (
-                      <div className="inline-flex px-4 py-2 rounded-xl font-bold text-sm" style={{ backgroundColor: 'rgba(249,112,21,0.1)', color: '#f97015' }}>
-                        {salary}
-                      </div>
-                    )}
                   </Link>
                 )
               })}
@@ -220,46 +274,44 @@ export default async function HomePage() {
 
       {/* ── OFERTY ZEWNĘTRZNE ── */}
       {externalOffers.length > 0 && (
-        <section className="py-20">
+        <section className="py-8 sm:py-20">
           <div className="max-w-6xl mx-auto px-6">
             <div className="flex items-center justify-between mb-10">
               <div>
-                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-3" style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
+                <span className="glass-badge inline-block px-4 py-1.5 rounded-full text-sm font-semibold mb-3">
                   🌐 Zewnętrzne
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-black" style={{ color: '#1a1a2e' }}>Oferty z OLX i innych</h2>
               </div>
               <Link href="/offers?external=true"
-                className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all"
-                style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
+                className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold glass-button transition-all">
                 Zobacz wszystkie
               </Link>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {externalOffers.map(offer => (
                 <a key={offer.id} href={offer.url} target="_blank" rel="noopener noreferrer"
-                  className="glass-card p-6 group transition-all hover:scale-[1.02]">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg shrink-0"
-                      style={{ backgroundColor: 'rgba(34,197,94,0.1)' }}>
+                  className="glass-card p-5 transition-all group relative overflow-hidden hover:scale-[1.02]">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg shrink-0 bg-green-100">
                       🌐
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-base truncate group-hover:text-green-500 transition-colors" style={{ color: '#1a1a2e' }}>{offer.title}</p>
-                      <p className="text-sm" style={{ color: '#22c55e' }}>{offer.source}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs px-2.5 py-1 rounded-lg font-semibold bg-green-100 text-green-700">{offer.source}</span>
+                      </div>
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <p className="font-bold line-clamp-2 leading-snug" style={{ color: '#1a1a2e' }}>{offer.title}</p>
+                        {offer.salary && <p className="font-bold shrink-0 text-sm text-green-700">{offer.salary}</p>}
+                      </div>
+                      <p className="text-sm mt-0.5" style={{ color: '#94a3b8' }}>📍 {offer.location || 'Brak lokalizacji'}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm mb-4" style={{ color: '#64748b' }}>
-                    <span>📍</span>
-                    <span>{offer.location || 'Brak lokalizacji'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    {offer.salary && (
-                      <span className="font-bold text-sm" style={{ color: '#22c55e' }}>{offer.salary}</span>
-                    )}
-                    <span className="text-xs px-3 py-1 rounded-lg font-medium" style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
-                      Zobacz →
+                  {/* Hover button */}
+                  <div className="hidden lg:flex absolute right-4 top-1/2 -translate-y-1/2 flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+                    <span className="text-xs font-bold px-4 py-2 rounded-xl text-white whitespace-nowrap bg-green-600">
+                      Zobacz szczegóły
                     </span>
                   </div>
                 </a>
@@ -268,9 +320,8 @@ export default async function HomePage() {
 
             <div className="sm:hidden mt-6 text-center">
               <Link href="/offers?external=true"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold"
-                style={{ backgroundColor: 'rgba(34,197,94,0.1)', color: '#22c55e' }}>
-                Zobacz wszystkie zewnętrzne →
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold bg-green-100 text-green-700">
+                Zobacz wszystkie oferty →
               </Link>
             </div>
           </div>

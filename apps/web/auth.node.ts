@@ -1,7 +1,6 @@
 import NextAuth, { type DefaultSession } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import Google from 'next-auth/providers/google'
-import Facebook from 'next-auth/providers/facebook'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 
@@ -48,26 +47,16 @@ const googleProvider = process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT
     }
   : null
 
-const facebookProvider = process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET
-  ? {
-      provider: Facebook({
-        clientId: process.env.FACEBOOK_CLIENT_ID,
-        clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-      }),
-    }
-  : null
-
 const providers = [
   credentialsProvider.provider,
   ...(googleProvider ? [googleProvider.provider] : []),
-  ...(facebookProvider ? [facebookProvider.provider] : []),
 ]
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
   providers,
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === 'google' || account?.provider === 'facebook' || account?.provider === 'linkedin') {
+      if (account?.provider === 'google') {
         const email = user.email
         if (!email) return true
 

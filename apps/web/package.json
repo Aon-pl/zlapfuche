@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "expire": "npx tsx scripts/expire-offers.ts"
+    "expire": "npx tsx scripts/expire-offers.ts",
+    "super-fuchowicz": "npx tsx scripts/super-fuchowicz.ts"
   },
   "dependencies": {
     "@prisma/client": "5",
